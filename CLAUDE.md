@@ -65,12 +65,12 @@ backend/app/
    - [x] Project scaffolding (folder, git init, branch=main)
    - [x] Foundational files: `.gitignore`, `README.md`, `CLAUDE.md`, `LICENSE`, `.env.example`
    - [x] First commit + pushed to GitHub: https://github.com/Bridev04/inkwell
+   - [x] `backend/` setup with uv + FastAPI
+   - [x] Health check endpoint
 
 ### Up Next
-- [ ] First commit
-- [ ] GitHub repo creation + push
-- [ ] `backend/` setup with uv + FastAPI
-- [ ] Health check endpoint
+- [ ] Tests: pytest harness + `tests/test_health.py`
+- [ ] Ruff + mypy config
 - [ ] Anthropic LLM service abstraction
 - [ ] First feature endpoint: `POST /api/v1/feedback`
 - [ ] PostgreSQL setup
