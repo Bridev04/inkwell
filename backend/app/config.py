@@ -6,7 +6,7 @@ Import `settings` everywhere else.
 
 from functools import lru_cache
 
-from pydantic import Field
+from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -24,8 +24,9 @@ class Settings(BaseSettings):
     debug: bool = Field(default=True)
 
     # LLM
-    anthropic_api_key: str = Field(default="")
-    llm_model: str = Field(default="claude-haiku-4-5-20251001")
+    anthropic_api_key: SecretStr
+    llm_default_model: str = Field(default="claude-haiku-4-5-20251001")
+    llm_max_tokens: int = Field(default=1024)
 
 
 @lru_cache
