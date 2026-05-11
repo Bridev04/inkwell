@@ -60,8 +60,11 @@ backend/app/
 ## Current Status & TODOs
 
 ### Completed
-- [x] Project scaffolding (folder, git init, branch=main)
-- [x] Foundational files: `.gitignore`, `README.md`, `CLAUDE.md`, `LICENSE`, `.env.example`
+   - [x] Dev environment: WSL2 + pyenv + Python 3.12 + uv + Node + VS Code+WSL
+   - [x] Anthropic API key with spend limits configured
+   - [x] Project scaffolding (folder, git init, branch=main)
+   - [x] Foundational files: `.gitignore`, `README.md`, `CLAUDE.md`, `LICENSE`, `.env.example`
+   - [x] First commit + pushed to GitHub: https://github.com/Bridev04/inkwell
 
 ### Up Next
 - [ ] First commit
