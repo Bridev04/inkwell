@@ -69,9 +69,10 @@ backend/app/
    - [x] Health check endpoint (`GET /api/v1/health`)
    - [x] Test harness: pytest + httpx (ASGITransport)
    - [x] Quality gates: ruff (lint + format), mypy (strict), Makefile
+   - [x] LLM service layer foundation: `LLMClient` Protocol, Pydantic schemas, `FakeLLMClient` for tests
+   - [x] AnthropicClient: concrete LLMClient implementation wrapping the Anthropic SDK
 
 ### Up Next
-- [ ] LLM service layer (`app/services/llm/`): Protocol-based interface + AnthropicClient implementation
 - [ ] First feature endpoint: `POST /api/v1/feedback` (draft → AI feedback)
 - [ ] Tests with mocked LLM client (no real API calls in CI)
 - [ ] PostgreSQL setup
