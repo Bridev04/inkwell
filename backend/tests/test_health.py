@@ -1,5 +1,7 @@
 """Tests for the health check endpoint."""
 
+from collections.abc import AsyncIterator
+
 import pytest
 from httpx import ASGITransport, AsyncClient
 
@@ -7,7 +9,7 @@ from app.main import app
 
 
 @pytest.fixture
-async def client():
+async def client() -> AsyncIterator[AsyncClient]:
     """Async HTTP client that talks to the FastAPI app in-process.
 
     ASGITransport skips the network entirely — no server needed.
