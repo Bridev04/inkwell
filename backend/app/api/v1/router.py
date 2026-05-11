@@ -1,4 +1,5 @@
 """Aggregates all v1 routers into one."""
+
 from fastapi import APIRouter
 
 from app.api.v1 import health

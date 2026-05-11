@@ -1,8 +1,9 @@
 """FastAPI application entrypoint."""
+
 from fastapi import FastAPI
 
-from app.config import settings
 from app.api.v1.router import api_router
+from app.config import settings
 
 
 def create_app() -> FastAPI:

@@ -1,4 +1,5 @@
 """Health check response schema."""
+
 from pydantic import BaseModel
 
 
