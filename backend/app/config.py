@@ -3,7 +3,9 @@
 Per CLAUDE.md: this is the ONLY place env vars are read.
 Import `settings` everywhere else.
 """
+
 from functools import lru_cache
+
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
