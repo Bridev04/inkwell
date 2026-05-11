@@ -66,13 +66,14 @@ backend/app/
    - [x] Foundational files: `.gitignore`, `README.md`, `CLAUDE.md`, `LICENSE`, `.env.example`
    - [x] First commit + pushed to GitHub: https://github.com/Bridev04/inkwell
    - [x] `backend/` setup with uv + FastAPI
-   - [x] Health check endpoint
+   - [x] Health check endpoint (`GET /api/v1/health`)
+   - [x] Test harness: pytest + httpx (ASGITransport)
+   - [x] Quality gates: ruff (lint + format), mypy (strict), Makefile
 
 ### Up Next
-- [ ] Tests: pytest harness + `tests/test_health.py`
-- [ ] Ruff + mypy config
-- [ ] Anthropic LLM service abstraction
-- [ ] First feature endpoint: `POST /api/v1/feedback`
+- [ ] LLM service layer (`app/services/llm/`): Protocol-based interface + AnthropicClient implementation
+- [ ] First feature endpoint: `POST /api/v1/feedback` (draft → AI feedback)
+- [ ] Tests with mocked LLM client (no real API calls in CI)
 - [ ] PostgreSQL setup
 - [ ] User model + JWT auth
 - [ ] Frontend scaffold (Next.js)
