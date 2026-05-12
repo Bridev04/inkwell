@@ -7,13 +7,14 @@ test code — useful for local runs without API credits.
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+import asyncio
+from collections.abc import AsyncGenerator, Sequence
 from dataclasses import dataclass, field
 
 from pydantic import BaseModel
 
 from app.services.llm.base import LLMClient
-from app.services.llm.schemas import LLMMessage, LLMResponse, LLMUsage, TokenUsage
+from app.services.llm.schemas import LLMMessage, LLMResponse, LLMUsage, StreamChunk, TokenUsage
 
 
 @dataclass
@@ -49,6 +50,7 @@ class FakeLLMClient(LLMClient):
     model_name: str = "fake-model"
     calls: list[RecordedCall] = field(default_factory=list)
     structured_responses: list[BaseModel | Exception] = field(default_factory=list)
+    stream_chunks: list[StreamChunk | Exception] = field(default_factory=list)
     _cursor: int = 0
     _structured_cursor: int = 0
 
@@ -99,3 +101,14 @@ class FakeLLMClient(LLMClient):
             TokenUsage(input_tokens=10, output_tokens=20, total_tokens=30),
             self.model_name,
         )
+
+    async def generate_stream(
+        self,
+        prompt: str,
+        system: str | None = None,
+    ) -> AsyncGenerator[StreamChunk, None]:
+        for item in self.stream_chunks:
+            await asyncio.sleep(0)
+            if isinstance(item, Exception):
+                raise item
+            yield item

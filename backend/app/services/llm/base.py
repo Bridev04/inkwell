@@ -7,22 +7,17 @@ implementations live alongside this file (anthropic_client.py, fakes.py).
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import AsyncIterator, Sequence
 from typing import Protocol, runtime_checkable
 
 from pydantic import BaseModel
 
-from app.services.llm.schemas import LLMMessage, LLMResponse, TokenUsage
+from app.services.llm.schemas import LLMMessage, LLMResponse, StreamChunk, TokenUsage
 
 
 @runtime_checkable
 class LLMClient(Protocol):
-    """Minimal interface for a chat-completion LLM provider.
-
-    Streaming is intentionally omitted from v1 — it will be added as a
-    separate method (`stream`) when the frontend needs it, so synchronous
-    callers don't have to deal with async iterators.
-    """
+    """Minimal interface for a chat-completion LLM provider."""
 
     async def complete(
         self,
@@ -66,6 +61,19 @@ class LLMClient(Protocol):
                 after any provider-level retries. Callers may retry once.
             Provider-specific exceptions propagate unchanged so route handlers
                 can map them to appropriate HTTP status codes.
+        """
+        ...
+
+    def generate_stream(
+        self,
+        prompt: str,
+        system: str | None = None,
+    ) -> AsyncIterator[StreamChunk]:
+        """Stream a completion as an async sequence of chunks.
+
+        Yields zero or more ``type="text"`` chunks followed by exactly one
+        ``type="done"`` chunk. Provider-specific exceptions propagate unchanged
+        so route handlers can map pre-flight errors to HTTP status codes.
         """
         ...
 
