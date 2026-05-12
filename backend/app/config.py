@@ -32,6 +32,9 @@ class Settings(BaseSettings):
     anthropic_model: str = Field(default="claude-haiku-4-5-20251001")
     feedback_max_text_chars: int = Field(default=10_000)
 
+    # Rewrites endpoint
+    rewrite_max_text_chars: int = Field(default=10_000)
+
 
 @lru_cache
 def get_settings() -> Settings:
