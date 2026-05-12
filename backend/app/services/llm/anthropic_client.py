@@ -7,7 +7,7 @@ talks to LLMClient.
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import AsyncGenerator, Sequence
 
 import anthropic
 from anthropic.types import MessageParam, TextBlock, ToolChoiceToolParam, ToolParam, ToolUseBlock
@@ -15,7 +15,7 @@ from pydantic import BaseModel
 
 from app.config import Settings
 from app.services.llm.base import LLMError
-from app.services.llm.schemas import LLMMessage, LLMResponse, LLMUsage, TokenUsage
+from app.services.llm.schemas import LLMMessage, LLMResponse, LLMUsage, StreamChunk, TokenUsage
 
 
 class AnthropicClient:
@@ -114,3 +114,29 @@ class AnthropicClient:
             total_tokens=response.usage.input_tokens + response.usage.output_tokens,
         )
         return parsed, usage, response.model
+
+    async def generate_stream(
+        self,
+        prompt: str,
+        system: str | None = None,
+    ) -> AsyncGenerator[StreamChunk, None]:
+        """Stream a completion, forwarding text deltas as they arrive."""
+        user_message: MessageParam = {"role": "user", "content": prompt}
+        async with self._client.messages.stream(
+            model=self._default_model,
+            max_tokens=self._max_tokens,
+            messages=[user_message],
+            system=system if system is not None else anthropic.Omit(),
+        ) as stream:
+            async for text in stream.text_stream:
+                yield StreamChunk(type="text", text=text)
+            final = await stream.get_final_message()
+            yield StreamChunk(
+                type="done",
+                tokens_used=TokenUsage(
+                    input_tokens=final.usage.input_tokens,
+                    output_tokens=final.usage.output_tokens,
+                    total_tokens=final.usage.input_tokens + final.usage.output_tokens,
+                ),
+                model_used=final.model,
+            )

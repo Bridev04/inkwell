@@ -50,3 +50,17 @@ class LLMResponse(BaseModel):
     model: str
     usage: LLMUsage
     stop_reason: str | None = None
+
+
+class StreamChunk(BaseModel):
+    """A single event in a streaming LLM response.
+
+    Yields zero or more ``type="text"`` chunks followed by exactly one
+    ``type="done"`` chunk so consumers can detect completion without
+    inspecting provider-specific event types.
+    """
+
+    type: Literal["text", "done"]
+    text: str | None = None
+    tokens_used: TokenUsage | None = None
+    model_used: str | None = None
