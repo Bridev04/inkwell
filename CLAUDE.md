@@ -71,10 +71,11 @@ backend/app/
    - [x] Quality gates: ruff (lint + format), mypy (strict), Makefile
    - [x] LLM service layer foundation: `LLMClient` Protocol, Pydantic schemas, `FakeLLMClient` for tests
    - [x] AnthropicClient: concrete LLMClient implementation wrapping the Anthropic SDK
+   - [x] First feature endpoint: POST /api/v1/feedback (draft → structured AI feedback)
+   - [x] Tests with mocked LLM client (no real API calls in CI)
+   - [x] Structured per-request logging with key=value format
 
 ### Up Next
-- [ ] First feature endpoint: `POST /api/v1/feedback` (draft → AI feedback)
-- [ ] Tests with mocked LLM client (no real API calls in CI)
 - [ ] PostgreSQL setup
 - [ ] User model + JWT auth
 - [ ] Frontend scaffold (Next.js)
