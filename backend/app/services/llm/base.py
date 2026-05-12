@@ -10,7 +10,9 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import Protocol, runtime_checkable
 
-from app.services.llm.schemas import LLMMessage, LLMResponse
+from pydantic import BaseModel
+
+from app.services.llm.schemas import LLMMessage, LLMResponse, TokenUsage
 
 
 @runtime_checkable
@@ -44,6 +46,26 @@ class LLMClient(Protocol):
         Raises:
             LLMError: On any provider-side failure (network, rate limit, invalid request).
                 Callers should not need to catch provider-specific exceptions.
+        """
+        ...
+
+    async def generate_structured(
+        self,
+        prompt: str,
+        response_schema: type[BaseModel],
+        system: str | None = None,
+    ) -> tuple[BaseModel, TokenUsage, str]:
+        """Generate a completion and parse the response into a Pydantic model.
+
+        Uses tool-use / function-calling to force the provider to emit a
+        schema-conformant JSON object. The third element of the return tuple
+        is the model identifier reported by the provider.
+
+        Raises:
+            pydantic.ValidationError: If the provider response fails schema validation
+                after any provider-level retries. Callers may retry once.
+            Provider-specific exceptions propagate unchanged so route handlers
+                can map them to appropriate HTTP status codes.
         """
         ...
 

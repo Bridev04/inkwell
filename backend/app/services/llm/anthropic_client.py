@@ -10,11 +10,12 @@ from __future__ import annotations
 from collections.abc import Sequence
 
 import anthropic
-from anthropic.types import MessageParam, TextBlock
+from anthropic.types import MessageParam, TextBlock, ToolChoiceToolParam, ToolParam, ToolUseBlock
+from pydantic import BaseModel
 
 from app.config import Settings
 from app.services.llm.base import LLMError
-from app.services.llm.schemas import LLMMessage, LLMResponse, LLMUsage
+from app.services.llm.schemas import LLMMessage, LLMResponse, LLMUsage, TokenUsage
 
 
 class AnthropicClient:
@@ -68,3 +69,48 @@ class AnthropicClient:
             ),
             stop_reason=response.stop_reason,
         )
+
+    async def generate_structured(
+        self,
+        prompt: str,
+        response_schema: type[BaseModel],
+        system: str | None = None,
+    ) -> tuple[BaseModel, TokenUsage, str]:
+        """Force-call a single tool whose schema mirrors `response_schema`.
+
+        The Anthropic tool-use feature guarantees the response matches the
+        schema, so validation failures indicate a genuine schema mismatch
+        rather than a formatting glitch.
+        """
+        tool_name = response_schema.__name__
+        tool: ToolParam = {
+            "name": tool_name,
+            "description": f"Return a structured {tool_name} object.",
+            "input_schema": response_schema.model_json_schema(),
+        }
+        tool_choice: ToolChoiceToolParam = {"type": "tool", "name": tool_name}
+        user_message: MessageParam = {"role": "user", "content": prompt}
+
+        response = await self._client.messages.create(
+            model=self._default_model,
+            max_tokens=self._max_tokens,
+            messages=[user_message],
+            system=system if system is not None else anthropic.Omit(),
+            tools=[tool],
+            tool_choice=tool_choice,
+        )
+
+        tool_block = next(
+            (b for b in response.content if isinstance(b, ToolUseBlock)),
+            None,
+        )
+        if tool_block is None:
+            raise LLMError("No tool_use block in structured response")
+
+        parsed = response_schema.model_validate(tool_block.input)
+        usage = TokenUsage(
+            input_tokens=response.usage.input_tokens,
+            output_tokens=response.usage.output_tokens,
+            total_tokens=response.usage.input_tokens + response.usage.output_tokens,
+        )
+        return parsed, usage, response.model

@@ -10,8 +10,10 @@ from __future__ import annotations
 from collections.abc import Sequence
 from dataclasses import dataclass, field
 
+from pydantic import BaseModel
+
 from app.services.llm.base import LLMClient
-from app.services.llm.schemas import LLMMessage, LLMResponse, LLMUsage
+from app.services.llm.schemas import LLMMessage, LLMResponse, LLMUsage, TokenUsage
 
 
 @dataclass
@@ -36,12 +38,19 @@ class FakeLLMClient(LLMClient):
     By default returns the same response indefinitely. Pass a list to cycle
     through scripted responses; raises IndexError if exhausted (tests should
     provide enough responses for the calls they trigger).
+
+    For generate_structured, populate `structured_responses` with BaseModel
+    instances to return or Exception instances to raise. Pass exceptions to
+    simulate provider errors (e.g. anthropic.APITimeoutError) or Pydantic
+    ValidationErrors for retry testing.
     """
 
     responses: list[str] = field(default_factory=lambda: [""])
     model_name: str = "fake-model"
     calls: list[RecordedCall] = field(default_factory=list)
+    structured_responses: list[BaseModel | Exception] = field(default_factory=list)
     _cursor: int = 0
+    _structured_cursor: int = 0
 
     async def complete(
         self,
@@ -70,4 +79,23 @@ class FakeLLMClient(LLMClient):
             model=model or self.model_name,
             usage=LLMUsage(input_tokens=0, output_tokens=0),
             stop_reason="end_turn",
+        )
+
+    async def generate_structured(
+        self,
+        prompt: str,
+        response_schema: type[BaseModel],
+        system: str | None = None,
+    ) -> tuple[BaseModel, TokenUsage, str]:
+        idx = min(self._structured_cursor, len(self.structured_responses) - 1)
+        self._structured_cursor += 1
+        item = self.structured_responses[idx]
+
+        if isinstance(item, Exception):
+            raise item
+
+        return (
+            item,
+            TokenUsage(input_tokens=10, output_tokens=20, total_tokens=30),
+            self.model_name,
         )
