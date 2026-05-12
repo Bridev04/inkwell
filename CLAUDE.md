@@ -74,6 +74,8 @@ backend/app/
    - [x] First feature endpoint: POST /api/v1/feedback (draft → structured AI feedback)
    - [x] Tests with mocked LLM client (no real API calls in CI)
    - [x] Structured per-request logging with key=value format
+   - [x] Second feature endpoint: POST /api/v1/rewrites (streamed SSE)
+   - [x] Streaming AI responses for low perceived latency
 
 ### Up Next
 - [ ] PostgreSQL setup
