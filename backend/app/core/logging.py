@@ -1,4 +1,4 @@
-"""Structured logging configuration for Inkwell.
+"""Structured logging configuration for Draftwell.
 
 Call configure_logging() once at app startup. All modules should use
 logging.getLogger(__name__) — never print().

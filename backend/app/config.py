@@ -19,7 +19,7 @@ class Settings(BaseSettings):
     )
 
     # App
-    app_name: str = "Inkwell"
+    app_name: str = "Draftwell"
     environment: str = Field(default="development")
     debug: bool = Field(default=True)
 

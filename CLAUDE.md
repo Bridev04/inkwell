@@ -1,4 +1,4 @@
-# CLAUDE.md — Project Memory for Inkwell
+# CLAUDE.md — Project Memory for Draftwell
 
 This file is the source of truth for AI assistants working on this codebase.
 When this project is opened in Claude Code (or similar AI coding tools), this file is read first.
@@ -6,7 +6,7 @@ Keep it updated as the project evolves.
 
 ## Project
 
-**Name:** Inkwell  
+**Name:** Draftwell  
 **Purpose:** AI-powered writing assistant. Users submit drafts, receive feedback, rewrites, and tone analysis. Authenticated, with per-user history.  
 **Stage:** Phase 1 — Backend foundation  
 
@@ -64,7 +64,7 @@ backend/app/
    - [x] Anthropic API key with spend limits configured
    - [x] Project scaffolding (folder, git init, branch=main)
    - [x] Foundational files: `.gitignore`, `README.md`, `CLAUDE.md`, `LICENSE`, `.env.example`
-   - [x] First commit + pushed to GitHub: https://github.com/Bridev04/inkwell
+   - [x] First commit + pushed to GitHub: https://github.com/Bridev04/draftwell
    - [x] `backend/` setup with uv + FastAPI
    - [x] Health check endpoint (`GET /api/v1/health`)
    - [x] Test harness: pytest + httpx (ASGITransport)

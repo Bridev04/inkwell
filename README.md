@@ -1,4 +1,4 @@
-# Inkwell
+# Draftwell
 
 > An AI-powered writing assistant that helps users improve their drafts with feedback, rewrites, and tone analysis.
 
@@ -38,8 +38,8 @@ See [`docs/architecture.md`](docs/architecture.md) for the full system design *(
 
 ```bash
 # Clone and enter
-git clone https://github.com/Bridev04/inkwell.git
-cd inkwell
+git clone https://github.com/Bridev04/draftwell.git
+cd draftwell
 
 # Backend setup
 cd backend
