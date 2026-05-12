@@ -17,7 +17,6 @@ from app.schemas.feedback import (
     DimensionFeedback,
     FeedbackRequest,
     FeedbackResponse,
-    FocusDimension,
 )
 from app.services.llm.base import LLMClient
 from app.services.llm.schemas import TokenUsage
@@ -123,7 +122,3 @@ async def generate_feedback(req: FeedbackRequest, llm: LLMClient) -> FeedbackRes
         model_used=model_name,
         tokens_used=token_usage,
     )
-
-
-def _make_focus_list() -> list[FocusDimension]:
-    return list(FocusDimension)
