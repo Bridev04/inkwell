@@ -17,11 +17,19 @@ if config.config_file_name is not None:
 
 target_metadata = Base.metadata
 
-# Use the sync psycopg v3 URL from settings.
-# The app uses asyncpg; Alembic's synchronous runner requires a sync driver.
-if settings.database_url_sync is None:
-    raise RuntimeError("DATABASE_URL_SYNC is not configured; add it to .env")
-config.set_main_option("sqlalchemy.url", settings.database_url_sync)
+# URL precedence: a URL already set on the Alembic Config (e.g. by test
+# fixtures calling cfg.set_main_option) wins. Otherwise fall back to the
+# sync URL from app settings.
+#
+# The app uses asyncpg; Alembic's synchronous runner requires a sync driver,
+# which is why we read database_url_sync rather than database_url here.
+if not config.get_main_option("sqlalchemy.url"):
+    if settings.database_url_sync is None:
+        raise RuntimeError(
+            "DATABASE_URL_SYNC is not configured and no URL was supplied to "
+            "Alembic; add DATABASE_URL_SYNC to .env"
+        )
+    config.set_main_option("sqlalchemy.url", settings.database_url_sync)
 
 
 def run_migrations_offline() -> None:
