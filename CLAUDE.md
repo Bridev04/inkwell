@@ -83,10 +83,11 @@ backend/app/
    - [x] `document_id` returned in feedback response; `document` SSE event in rewrite stream
    - [x] `GET /api/v1/documents/{id}` — fetch saved doc with embedded feedbacks + rewrites
    - [x] Testcontainers-based integration tests with per-test transaction rollback
+   - [x] `alembic/env.py` URL-precedence fix (caller-supplied URL wins over settings fallback)
 
 ### Up Next
-- [ ] User model + JWT auth
 - [ ] Frontend scaffold (Next.js)
+- [ ] User model + JWT auth
 - [ ] CI/CD with GitHub Actions
 - [ ] Deployment (Railway)
 
