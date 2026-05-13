@@ -84,6 +84,7 @@ backend/app/
    - [x] `GET /api/v1/documents/{id}` — fetch saved doc with embedded feedbacks + rewrites
    - [x] Testcontainers-based integration tests with per-test transaction rollback
    - [x] `alembic/env.py` URL-precedence fix (caller-supplied URL wins over settings fallback)
+   - [x] CORS middleware: explicit origin allowlist, configurable via `CORS_ALLOWED_ORIGINS` env var
 
 ### Up Next
 - [ ] Frontend scaffold (Next.js)

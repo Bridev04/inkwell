@@ -6,7 +6,6 @@ the HTTP layer, so they are fast and always run (no Docker required).
 
 from __future__ import annotations
 
-import pytest
 from httpx import ASGITransport, AsyncClient
 
 from app.main import app
@@ -44,9 +43,7 @@ async def test_cors_unlisted_origin_is_blocked() -> None:
     """Requests from an origin not in the allowlist must NOT receive the ACAO header."""
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        response = await ac.get(
-            _HEALTH_URL, headers={"Origin": "http://evil.example.com"}
-        )
+        response = await ac.get(_HEALTH_URL, headers={"Origin": "http://evil.example.com"})
 
     assert response.status_code == 200
     assert "access-control-allow-origin" not in response.headers
