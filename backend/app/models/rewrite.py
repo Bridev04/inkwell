@@ -40,6 +40,4 @@ class Rewrite(Base):
         DateTime(timezone=True), server_default=text("now()"), nullable=False
     )
 
-    document: Mapped[Document] = relationship(
-        "Document", back_populates="rewrites", lazy="raise"
-    )
+    document: Mapped[Document] = relationship("Document", back_populates="rewrites", lazy="raise")

@@ -35,9 +35,7 @@ async def create_feedback(
     except anthropic.RateLimitError as exc:
         raise HTTPException(status_code=429, detail="LLM rate limit exceeded") from exc
     except ValidationError as exc:
-        raise HTTPException(
-            status_code=502, detail="AI response could not be validated"
-        ) from exc
+        raise HTTPException(status_code=502, detail="AI response could not be validated") from exc
     except anthropic.APIError as exc:
         raise HTTPException(status_code=502, detail="LLM service error") from exc
 

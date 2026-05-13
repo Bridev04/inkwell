@@ -76,10 +76,32 @@ backend/app/
    - [x] Structured per-request logging with key=value format
    - [x] Second feature endpoint: POST /api/v1/rewrites (streamed SSE)
    - [x] Streaming AI responses for low perceived latency
+   - [x] PostgreSQL 16 via Docker Compose (`backend/docker-compose.yml`)
+   - [x] Async SQLAlchemy 2.0 + asyncpg + Alembic migrations
+   - [x] Three tables: `documents`, `feedbacks` (JSONB), `rewrites` (CHECK style constraint)
+   - [x] Anonymous persistence layer: `save=true` flag on feedback + rewrites endpoints
+   - [x] `document_id` returned in feedback response; `document` SSE event in rewrite stream
+   - [x] `GET /api/v1/documents/{id}` — fetch saved doc with embedded feedbacks + rewrites
+   - [x] Testcontainers-based integration tests with per-test transaction rollback
 
 ### Up Next
-- [ ] PostgreSQL setup
 - [ ] User model + JWT auth
 - [ ] Frontend scaffold (Next.js)
 - [ ] CI/CD with GitHub Actions
 - [ ] Deployment (Railway)
+
+## Local DB Setup
+
+```bash
+# Start Postgres (from backend/)
+docker compose up -d
+
+# Apply migrations
+uv run alembic upgrade head
+
+# Wipe and restart from scratch
+docker compose down -v && docker compose up -d && uv run alembic upgrade head
+```
+
+The app reads `DATABASE_URL` (asyncpg) and `DATABASE_URL_SYNC` (psycopg) from `.env`.
+Copy `.env.example` → `.env` and fill in your values. The docker-compose defaults match the example.

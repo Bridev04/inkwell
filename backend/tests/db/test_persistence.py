@@ -20,7 +20,6 @@ from app.services.llm.fakes import FakeLLMClient
 from app.services.llm.schemas import StreamChunk, TokenUsage
 from app.services.persistence import get_document, save_feedback, save_rewrite
 
-
 # ---------------------------------------------------------------------------
 # Smoke: service layer round-trip
 # ---------------------------------------------------------------------------
@@ -166,19 +165,19 @@ async def test_rewrites_save_true_emits_document_event(
     """POST /rewrites with save=True emits a document SSE event and persists the row."""
     import json
 
-    fake = FakeLLMClient(
-        stream_chunks=[_text_chunk("Greetings, globe."), _done_chunk()]
-    )
+    fake = FakeLLMClient(stream_chunks=[_text_chunk("Greetings, globe."), _done_chunk()])
     app.dependency_overrides[get_llm_client] = lambda: fake
 
     transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        async with ac.stream(
+    async with (
+        AsyncClient(transport=transport, base_url="http://test") as ac,
+        ac.stream(
             "POST",
             "/api/v1/rewrites",
             json={"text": "Hello world.", "style": "formal", "save": True},
-        ) as response:
-            body = await response.aread()
+        ) as response,
+    ):
+        body = await response.aread()
 
     app.dependency_overrides.pop(get_llm_client, None)
 

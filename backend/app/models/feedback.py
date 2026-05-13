@@ -7,7 +7,8 @@ from datetime import datetime
 from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import DateTime, ForeignKey, text
-from sqlalchemy.dialects.postgresql import JSONB, UUID as PGUUID
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -33,6 +34,4 @@ class Feedback(Base):
         DateTime(timezone=True), server_default=text("now()"), nullable=False
     )
 
-    document: Mapped[Document] = relationship(
-        "Document", back_populates="feedbacks", lazy="raise"
-    )
+    document: Mapped[Document] = relationship("Document", back_populates="feedbacks", lazy="raise")

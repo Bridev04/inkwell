@@ -5,9 +5,9 @@ All LLM calls go through FakeLLMClient — no network traffic.
 
 from __future__ import annotations
 
+import anthropic
 import httpx
 import pytest
-import anthropic
 
 from app.schemas.rewrite import DoneEvent, ErrorEvent, RewriteRequest, RewriteStyle, TokenEvent
 from app.services.llm.fakes import FakeLLMClient
@@ -38,9 +38,9 @@ async def _collect_events(req: RewriteRequest, fake: FakeLLMClient) -> list[tupl
     async for sse in gen:
         for line in sse.splitlines():
             if line.startswith("event:"):
-                event_name = line[len("event:"):].strip()
+                event_name = line[len("event:") :].strip()
             elif line.startswith("data:"):
-                events.append((event_name, line[len("data:"):].strip()))
+                events.append((event_name, line[len("data:") :].strip()))
     return events
 
 
