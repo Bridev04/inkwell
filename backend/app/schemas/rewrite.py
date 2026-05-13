@@ -22,6 +22,7 @@ class RewriteRequest(BaseModel):
     text: str = Field(min_length=1, max_length=10_000)
     style: RewriteStyle
     audience: str | None = Field(default=None, max_length=200)
+    save: bool = False
 
 
 class TokenEvent(BaseModel):
@@ -44,3 +45,9 @@ class ErrorEvent(BaseModel):
 
     request_id: UUID
     message: str
+
+
+class DocumentEvent(BaseModel):
+    """Emitted after the stream completes and the rewrite is successfully saved."""
+
+    document_id: UUID
