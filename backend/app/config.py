@@ -35,6 +35,12 @@ class Settings(BaseSettings):
     # Rewrites endpoint
     rewrite_max_text_chars: int = Field(default=10_000)
 
+    # Database
+    # Two URLs for the same Postgres instance: the app uses the async asyncpg driver;
+    # Alembic uses the sync psycopg v3 driver. Both point at the same database.
+    database_url: str | None = Field(default=None)
+    database_url_sync: str | None = Field(default=None)
+
 
 @lru_cache
 def get_settings() -> Settings:

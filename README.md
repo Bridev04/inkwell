@@ -34,8 +34,6 @@ See [`docs/architecture.md`](docs/architecture.md) for the full system design *(
 
 ## Local Development
 
-> Documentation will be expanded as the project grows.
-
 ```bash
 # Clone and enter
 git clone https://github.com/Bridev04/draftwell.git
@@ -44,8 +42,49 @@ cd draftwell
 # Backend setup
 cd backend
 uv sync
-cp ../.env.example .env  # then edit .env with your keys
+cp ../.env.example .env  # then edit .env with your real keys
+
+# Start Postgres
+docker compose up -d
+
+# Apply database migrations
+uv run alembic upgrade head
+
+# Run the API server
 uv run uvicorn app.main:app --reload
+```
+
+### Running tests
+
+```bash
+cd backend
+
+# Unit tests (no DB required)
+uv run python -m pytest tests/ --ignore=tests/db -q
+
+# Integration tests (requires Docker)
+uv run python -m pytest tests/db -q
+
+# Full suite
+uv run python -m pytest -q
+```
+
+### Quality gates
+
+```bash
+cd backend
+uv run python -m ruff check .        # lint
+uv run python -m ruff format --check . # format
+uv run python -m mypy app            # type-check
+```
+
+### Wipe and restart the DB
+
+```bash
+cd backend
+docker compose down -v
+docker compose up -d
+uv run alembic upgrade head
 ```
 
 ## License
