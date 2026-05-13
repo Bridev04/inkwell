@@ -20,6 +20,7 @@ class FeedbackRequest(BaseModel):
     text: str = Field(min_length=1, max_length=10_000)
     focus: list[FocusDimension] = Field(default_factory=lambda: list(FocusDimension))
     audience: str | None = Field(default=None, max_length=200)
+    save: bool = False
 
 
 class DimensionFeedback(BaseModel):
@@ -36,3 +37,4 @@ class FeedbackResponse(BaseModel):
     suggested_rewrites: list[str] = Field(default_factory=list, max_length=3)
     model_used: str
     tokens_used: TokenUsage
+    document_id: UUID | None = None
