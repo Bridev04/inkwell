@@ -1,12 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { SiteFooter } from '@/components/site-footer';
+import { TypewriterStream } from '@/components/typewriter-stream';
 import {
   DisplayHeading,
   SectionLabel,
@@ -46,6 +47,13 @@ export default function Home() {
   const [isStreaming, setIsStreaming] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [reducedMotion, setReducedMotion] = useState(false);
+
+  useEffect(() => {
+    setReducedMotion(
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    );
+  }, []);
 
   async function handleFeedback() {
     if (!draft.trim()) return;
@@ -298,20 +306,11 @@ export default function Home() {
           </DisplayHeading>
           <Hairline variant="gold" className="mb-6" />
 
-          <div className="min-h-48">
-            {isStreaming && !rewriteText && (
-              <Mono className="text-stone-500">Writing…</Mono>
-            )}
-            <p className="font-serif leading-relaxed text-ink text-lg max-w-prose whitespace-pre-wrap">
-              {rewriteText}
-              {isStreaming && (
-                <span
-                  className="inline-block w-px h-5 bg-ink animate-pulse ml-0.5 align-middle"
-                  aria-hidden="true"
-                />
-              )}
-            </p>
-          </div>
+          <TypewriterStream
+            fullText={rewriteText}
+            isStreaming={isStreaming}
+            reducedMotion={reducedMotion}
+          />
 
           {!isStreaming && rewriteDocumentId && (
             <Mono className="block mt-4">
