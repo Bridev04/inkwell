@@ -8,7 +8,7 @@ Keep it updated as the project evolves.
 
 **Name:** Draftwell  
 **Purpose:** AI-powered writing assistant. Users submit drafts, receive feedback, rewrites, and tone analysis. Authenticated, with per-user history.  
-**Stage:** Phase 1 — Backend foundation  
+**Stage:** Phase 2 — Frontend scaffold (plumbing only; no design)  
 
 ## Tech Stack & Decisions
 
@@ -85,9 +85,15 @@ backend/app/
    - [x] Testcontainers-based integration tests with per-test transaction rollback
    - [x] `alembic/env.py` URL-precedence fix (caller-supplied URL wins over settings fallback)
    - [x] CORS middleware: explicit origin allowlist, configurable via `CORS_ALLOWED_ORIGINS` env var
+   - [x] Frontend scaffold: Next.js 16 + React 19 + Tailwind v4 + shadcn v4 (base-ui/react) in `frontend/`
+   - [x] `frontend/src/lib/api.ts` — fully-typed API client mirroring all backend Pydantic schemas
+   - [x] `frontend/src/lib/sse.ts` — minimal SSE parser over Fetch ReadableStream (POST-compatible)
+   - [x] `frontend/src/lib/savedDocs.ts` — localStorage wrapper for anonymous saved-document refs
+   - [x] Stub routes: `/` (feedback + streaming rewrite), `/documents` (saved list), `/documents/[id]` (fetch)
+   - [x] `npm run lint` and `npm run build` pass on the frontend
 
 ### Up Next
-- [ ] Frontend scaffold (Next.js)
+- [ ] Frontend design (Prompt 2): real UI, fonts, tokens, tests
 - [ ] User model + JWT auth
 - [ ] CI/CD with GitHub Actions
 - [ ] Deployment (Railway)
