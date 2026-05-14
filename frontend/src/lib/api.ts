@@ -153,9 +153,7 @@ export async function streamRewrite(
 }
 
 export async function getDocument(id: string): Promise<DocumentRead> {
-  const res = await fetch(`${baseUrl()}/api/v1/documents/${id}`, {
-    headers: { 'Content-Type': 'application/json' },
-  });
+  const res = await fetch(`${baseUrl()}/api/v1/documents/${id}`);
   await throwIfNotOk(res);
   return res.json() as Promise<DocumentRead>;
 }
