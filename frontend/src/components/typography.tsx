@@ -1,20 +1,28 @@
 import { cn } from '@/lib/utils';
 
-interface DisplayHeadingProps extends React.HTMLAttributes<HTMLHeadingElement> {
-  variant?: 'h1' | 'h2';
+// `as` overrides the rendered DOM element without changing the visual scale set by `variant`.
+// Use when semantic heading level must differ from visual size (e.g. h1 element that looks h2-sized).
+interface DisplayHeadingProps extends React.HTMLAttributes<HTMLElement> {
+  variant?: 'h1' | 'h2' | 'h3';
+  as?: React.ElementType;
 }
 
 export function DisplayHeading({
   variant = 'h1',
+  as: Tag,
   className,
   ...props
 }: DisplayHeadingProps) {
-  const Tag = variant;
+  const Element = (Tag ?? variant) as React.ElementType;
   return (
-    <Tag
+    <Element
       className={cn(
         'font-serif text-balance tracking-tight text-ink-strong',
-        variant === 'h1' ? 'text-5xl lg:text-6xl' : 'text-4xl lg:text-5xl',
+        variant === 'h1'
+          ? 'text-5xl lg:text-6xl'
+          : variant === 'h2'
+            ? 'text-4xl lg:text-5xl'
+            : 'text-2xl lg:text-3xl',
         className
       )}
       {...props}
