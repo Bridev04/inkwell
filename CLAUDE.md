@@ -91,12 +91,16 @@ backend/app/
    - [x] `frontend/src/lib/savedDocs.ts` — localStorage wrapper for anonymous saved-document refs
    - [x] Stub routes: `/` (feedback + streaming rewrite), `/documents` (saved list), `/documents/[id]` (fetch)
    - [x] `npm run lint` and `npm run build` pass on the frontend
-   - [x] Design foundation (Prompt 2a): design tokens, brand palette, typography components, restyled primitives (`Button`, `Card`, `Switch`, `Textarea`, `Separator`), `next/font` wiring, brand assets in `public/brand/`
-   - [x] `lib/savedDocs.ts` rewritten with `useSyncExternalStore` (cross-tab sync, internal subscriber set)
-   - [x] `lib/api.ts` GET requests no longer send `Content-Type` header
+   - [x] Design tokens (palette + semantic aliases + radius) wired in globals.css; full shadcn alias surface overridden so brand wins cascade
+   - [x] Typography via next/font: Playfair Display (serif), Inter Tight (sans, default), JetBrains Mono (metadata)
+   - [x] Brand assets committed to frontend/public/brand/ (7 PNGs: wordmark, wordmark-vertical, icon, app-icon, submark-disc, submark-badge, monogram)
+   - [x] Restyled base shadcn primitives: Button, Card, Switch, Textarea, Separator (gold = focus only, never CTA fill)
+   - [x] Typography utilities: DisplayHeading, SectionLabel (real small-caps + uppercase fallback), BodyProse, Mono, Hairline
+   - [x] Retrofit: api.ts GET requests no longer send Content-Type header
+   - [x] Retrofit: savedDocs hook uses useSyncExternalStore for cross-tab and cross-component sync
 
 ### Up Next
-- [ ] Frontend design (Prompt 2b): page-level redesigns for `/`, `/documents`, `/documents/[id]`
+- [ ] Frontend pages (Prompt 2b): compose real /, /documents, /documents/[id] using the design system + accessibility + tests
 - [ ] User model + JWT auth
 - [ ] CI/CD with GitHub Actions
 - [ ] Deployment (Railway)
