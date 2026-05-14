@@ -1,61 +1,73 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { listSavedDocs, clearSavedDocs, type SavedDocRef } from '@/lib/savedDocs';
+import { SiteHeader } from '@/components/site-header';
+import { SiteFooter } from '@/components/site-footer';
+import { DisplayHeading, BodyProse, Mono } from '@/components/typography';
+import { Hairline } from '@/components/hairline';
+import { useSavedDocs } from '@/lib/savedDocs';
+
+const dateFormatter = new Intl.DateTimeFormat(undefined, {
+  dateStyle: 'medium',
+  timeStyle: 'short',
+});
 
 export default function DocumentsPage() {
-  const [docs, setDocs] = useState<SavedDocRef[]>([]);
-
-  useEffect(() => {
-    // localStorage can only be read client-side; a post-mount effect is required
-    // to avoid SSR hydration mismatch. This is the recommended external-system-sync
-    // pattern, so we disable the rule that flags synchronous setState in effects.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setDocs(listSavedDocs());
-  }, []);
-
-  function handleClear() {
-    clearSavedDocs();
-    setDocs([]);
-  }
+  const docs = useSavedDocs();
 
   return (
-    <main className="p-8 max-w-3xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Saved Documents</h1>
-        {docs.length > 0 && (
-          <Button variant="destructive" onClick={handleClear}>
-            Clear all
-          </Button>
-        )}
-      </div>
+    <div className="flex flex-col min-h-full">
+      <SiteHeader />
+      <main className="flex-1 max-w-3xl mx-auto w-full px-6 lg:px-10 py-16">
+        <DisplayHeading as="h1" variant="h2" className="mb-3">
+          Saved drafts.
+        </DisplayHeading>
+        <BodyProse className="text-stone-500 mb-6">
+          Drafts you&apos;ve saved appear below. Anonymous and stored only in this browser.
+        </BodyProse>
+        <Hairline className="mb-10" />
 
-      {docs.length === 0 ? (
-        <p className="text-muted-foreground">No saved drafts yet.</p>
-      ) : (
-        <div className="flex flex-col gap-3">
-          {docs.map((doc) => (
-            <Card key={doc.id}>
-              <CardHeader>
-                <CardTitle className="text-sm font-mono truncate">{doc.id}</CardTitle>
-              </CardHeader>
-              <CardContent className="flex flex-col gap-1">
-                <p className="text-sm text-muted-foreground">{doc.snippet}</p>
-                <p className="text-xs text-muted-foreground">{doc.createdAt}</p>
+        {docs.length === 0 ? (
+          <div className="text-center py-16">
+            <BodyProse className="mx-auto">
+              No saved drafts yet. Drafts you save on the home page will appear here.
+            </BodyProse>
+            <Link
+              href="/"
+              className="mt-4 inline-block font-sans text-sm text-ink underline decoration-stone-300 underline-offset-4 hover:decoration-gold hover:text-ink-strong transition-colors"
+            >
+              Write a draft →
+            </Link>
+          </div>
+        ) : (
+          <ul className="space-y-4" role="list">
+            {docs.map((doc) => (
+              <li key={doc.id}>
                 <Link
                   href={`/documents/${doc.id}`}
-                  className="text-blue-600 text-sm hover:underline"
+                  className="group block border border-stone-300 rounded-md p-6 bg-cream hover:border-ink transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
                 >
-                  View document →
+                  <DisplayHeading
+                    as="h2"
+                    variant="h3"
+                    className="truncate mb-2"
+                  >
+                    {doc.snippet ? doc.snippet.slice(0, 60) : 'Untitled draft'}
+                  </DisplayHeading>
+                  <Mono className="block mb-3">
+                    Saved{' '}
+                    {dateFormatter.format(new Date(doc.createdAt))}
+                  </Mono>
+                  <span className="font-sans text-sm text-ink underline decoration-stone-300 underline-offset-4 group-hover:decoration-gold group-hover:text-ink-strong transition-colors">
+                    Open →
+                  </span>
                 </Link>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
-    </main>
+              </li>
+            ))}
+          </ul>
+        )}
+      </main>
+      <SiteFooter />
+    </div>
   );
 }
