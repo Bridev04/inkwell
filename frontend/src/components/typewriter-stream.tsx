@@ -71,6 +71,7 @@ export function TypewriterStream({
   // When reducedMotion is true, reveal full text immediately on stream completion.
   useEffect(() => {
     if (!reducedMotion || isStreaming) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setDisplayed(fullText);
     displayedCountRef.current = fullText.length;
     if (!completeCalledRef.current) {

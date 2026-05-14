@@ -14,6 +14,7 @@ export function useDraftPersistence(
   useEffect(() => {
     try {
       const stored = sessionStorage.getItem(key);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       if (stored !== null) setValue(stored);
     } catch {
       // sessionStorage may be unavailable (e.g., private browsing restrictions)
