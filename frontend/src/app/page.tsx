@@ -23,6 +23,7 @@ import {
   type RewriteDocumentEvent,
 } from '@/lib/api';
 import { addSavedDoc } from '@/lib/savedDocs';
+import { useDraftPersistence } from '@/lib/useDraftPersistence';
 
 type Action = 'feedback' | 'rewrite' | null;
 
@@ -36,7 +37,7 @@ function errorMessage(e: unknown, context: 'feedback' | 'rewrite'): string {
 }
 
 export default function Home() {
-  const [draft, setDraft] = useState('');
+  const [draft, setDraft, clearDraft] = useDraftPersistence('draftwell:home-composer');
   const [style, setStyle] = useState<RewriteStyle>('formal');
   const [save, setSave] = useState(false);
 
@@ -73,6 +74,7 @@ export default function Home() {
           createdAt: new Date().toISOString(),
           snippet: draft.slice(0, 80),
         });
+        clearDraft();
       }
     } catch (e) {
       setError(errorMessage(e, 'feedback'));
@@ -105,6 +107,7 @@ export default function Home() {
                 createdAt: new Date().toISOString(),
                 snippet: draft.slice(0, 80),
               });
+              clearDraft();
             }
           },
         }
