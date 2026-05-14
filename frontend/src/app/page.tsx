@@ -1,65 +1,168 @@
-import Image from "next/image";
+'use client';
+
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  submitFeedback,
+  streamRewrite,
+  type FeedbackResponse,
+  type RewriteStyle,
+  type RewriteDoneEvent,
+  type RewriteErrorEvent,
+  type RewriteDocumentEvent,
+} from '@/lib/api';
+import { addSavedDoc } from '@/lib/savedDocs';
 
 export default function Home() {
+  const [draft, setDraft] = useState('');
+  const [style, setStyle] = useState<RewriteStyle>('formal');
+  const [save, setSave] = useState(false);
+
+  const [feedbackResult, setFeedbackResult] = useState<FeedbackResponse | null>(null);
+  const [rewriteText, setRewriteText] = useState('');
+  const [rewriteMeta, setRewriteMeta] = useState<
+    (RewriteDoneEvent | RewriteErrorEvent | RewriteDocumentEvent)[]
+  >([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleFeedback() {
+    setLoading(true);
+    setError(null);
+    setFeedbackResult(null);
+    try {
+      const resp = await submitFeedback({ text: draft, save });
+      setFeedbackResult(resp);
+      if (save && resp.document_id) {
+        addSavedDoc({
+          id: resp.document_id,
+          createdAt: new Date().toISOString(),
+          snippet: draft.slice(0, 80),
+        });
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unknown error');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleRewrite() {
+    setLoading(true);
+    setError(null);
+    setRewriteText('');
+    setRewriteMeta([]);
+    try {
+      await streamRewrite(
+        { text: draft, style, save },
+        {
+          onToken: (evt) => setRewriteText((t) => t + evt.text),
+          onDone: (evt) => setRewriteMeta((m) => [...m, evt]),
+          onError: (evt) => setRewriteMeta((m) => [...m, evt]),
+          onDocument: (evt) => {
+            setRewriteMeta((m) => [...m, evt]);
+            if (save) {
+              addSavedDoc({
+                id: evt.document_id,
+                createdAt: new Date().toISOString(),
+                snippet: draft.slice(0, 80),
+              });
+            }
+          },
+        }
+      );
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unknown error');
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+    <main className="p-8 max-w-3xl mx-auto">
+      <h1 className="text-2xl font-bold mb-6">Draftwell</h1>
+
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Draft</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-4">
+          <Textarea
+            placeholder="Paste your draft here..."
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            className="min-h-40"
+          />
+          <div className="flex items-center gap-4">
+            <label htmlFor="style">Rewrite style:</label>
+            <select
+              id="style"
+              value={style}
+              onChange={(e) => setStyle(e.target.value as RewriteStyle)}
+              className="border rounded px-2 py-1"
             >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+              <option value="formal">Formal</option>
+              <option value="casual">Casual</option>
+              <option value="persuasive">Persuasive</option>
+              <option value="concise">Concise</option>
+              <option value="vivid">Vivid</option>
+            </select>
+          </div>
+          <div className="flex items-center gap-2">
+            <Switch
+              id="save-switch"
+              checked={save}
+              onCheckedChange={(checked) => setSave(checked)}
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+            <label htmlFor="save-switch">Save draft</label>
+          </div>
+          <div className="flex gap-2">
+            <Button onClick={handleFeedback} disabled={loading || !draft}>
+              Get Feedback
+            </Button>
+            <Button
+              onClick={handleRewrite}
+              disabled={loading || !draft}
+              variant="outline"
+            >
+              Get Rewrite
+            </Button>
+          </div>
+          {error && <p className="text-red-600 text-sm">{error}</p>}
+        </CardContent>
+      </Card>
+
+      {feedbackResult && (
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>Feedback Response</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <pre className="text-xs overflow-auto whitespace-pre-wrap">
+              {JSON.stringify(feedbackResult, null, 2)}
+            </pre>
+          </CardContent>
+        </Card>
+      )}
+
+      {(rewriteText || rewriteMeta.length > 0) && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Rewrite Stream</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-4">
+            {rewriteText && <p className="whitespace-pre-wrap">{rewriteText}</p>}
+            {rewriteMeta.length > 0 && (
+              <pre className="text-xs overflow-auto whitespace-pre-wrap">
+                {JSON.stringify(rewriteMeta, null, 2)}
+              </pre>
+            )}
+          </CardContent>
+        </Card>
+      )}
+    </main>
   );
 }
