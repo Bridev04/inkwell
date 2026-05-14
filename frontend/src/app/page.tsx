@@ -1,6 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+
+const REWRITE_STYLES = [
+  { value: 'formal', label: 'Formal' },
+  { value: 'casual', label: 'Casual' },
+  { value: 'persuasive', label: 'Persuasive' },
+  { value: 'concise', label: 'Concise' },
+  { value: 'vivid', label: 'Vivid' },
+] as const;
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -177,9 +185,9 @@ export default function Home() {
               onChange={(e) => setStyle(e.target.value as RewriteStyle)}
               className="bg-cream border border-stone-300 rounded-md px-3 py-2 font-sans text-sm text-ink focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2 focus-visible:ring-offset-cream focus:outline-none"
             >
-              <option value="formal">Formal</option>
-              <option value="casual">Casual</option>
-              <option value="persuasive">Persuasive</option>
+              {REWRITE_STYLES.map((s) => (
+                <option key={s.value} value={s.value}>{s.label}</option>
+              ))}
             </select>
           </div>
 
