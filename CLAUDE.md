@@ -91,9 +91,12 @@ backend/app/
    - [x] `frontend/src/lib/savedDocs.ts` — localStorage wrapper for anonymous saved-document refs
    - [x] Stub routes: `/` (feedback + streaming rewrite), `/documents` (saved list), `/documents/[id]` (fetch)
    - [x] `npm run lint` and `npm run build` pass on the frontend
+   - [x] Design foundation (Prompt 2a): design tokens, brand palette, typography components, restyled primitives (`Button`, `Card`, `Switch`, `Textarea`, `Separator`), `next/font` wiring, brand assets in `public/brand/`
+   - [x] `lib/savedDocs.ts` rewritten with `useSyncExternalStore` (cross-tab sync, internal subscriber set)
+   - [x] `lib/api.ts` GET requests no longer send `Content-Type` header
 
 ### Up Next
-- [ ] Frontend design (Prompt 2): real UI, fonts, tokens, tests
+- [ ] Frontend design (Prompt 2b): page-level redesigns for `/`, `/documents`, `/documents/[id]`
 - [ ] User model + JWT auth
 - [ ] CI/CD with GitHub Actions
 - [ ] Deployment (Railway)
