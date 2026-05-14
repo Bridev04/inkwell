@@ -6,7 +6,7 @@ Import `settings` everywhere else.
 
 from functools import lru_cache
 
-from pydantic import Field, SecretStr
+from pydantic import Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -34,6 +34,19 @@ class Settings(BaseSettings):
 
     # Rewrites endpoint
     rewrite_max_text_chars: int = Field(default=10_000)
+
+    # CORS
+    # Allowlist of origins permitted to make cross-origin requests (browser clients).
+    # Set CORS_ALLOWED_ORIGINS as a comma-separated string to add additional origins
+    # without a code change — e.g. the deployed Vercel URL in production.
+    cors_allowed_origins: list[str] = Field(default=["http://localhost:3000"])
+
+    @field_validator("cors_allowed_origins", mode="before")
+    @classmethod
+    def _parse_cors_origins(cls, v: object) -> object:
+        if isinstance(v, str):
+            return [origin.strip() for origin in v.split(",")]
+        return v
 
     # Database
     # Two URLs for the same Postgres instance: the app uses the async asyncpg driver;
