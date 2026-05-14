@@ -98,9 +98,15 @@ backend/app/
    - [x] Typography utilities: DisplayHeading, SectionLabel (real small-caps + uppercase fallback), BodyProse, Mono, Hairline
    - [x] Retrofit: api.ts GET requests no longer send Content-Type header
    - [x] Retrofit: savedDocs hook uses useSyncExternalStore for cross-tab and cross-component sync
+   - [x] Home page editorial cover with vertical wordmark hero (no nav)
+   - [x] Site header/footer chrome for non-home pages with active-link state
+   - [x] Cadence-buffered typewriter for streaming rewrites (Playfair, prefers-reduced-motion respected)
+   - [x] Session-scoped draft persistence on the composer
+   - [x] Saved drafts list and detail pages composed with the design system
+   - [x] Component tests (Vitest + RTL) for streaming, persistence, and page rendering
+   - [x] A11y: skip link, aria-live regions, real heading hierarchy, keyboard focus throughout
 
 ### Up Next
-- [ ] Frontend pages (Prompt 2b): compose real /, /documents, /documents/[id] using the design system + accessibility + tests
 - [ ] User model + JWT auth
 - [ ] CI/CD with GitHub Actions
 - [ ] Deployment (Railway)
