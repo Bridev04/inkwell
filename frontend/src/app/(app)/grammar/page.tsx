@@ -274,7 +274,8 @@ export default function GrammarPage() {
   const words = wordCount(draft);
 
   const [save, setSave] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [isChecking, setIsChecking] = useState(false);
+  const [isReviewing, setIsReviewing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<GrammarResponse | null>(null);
   const [savedId, setSavedId] = useState<string | null>(null);
@@ -289,7 +290,6 @@ export default function GrammarPage() {
   const [activeTab, setActiveTab] = useState<Tab>('all');
 
   const cardRefs = useRef<Map<number, HTMLDivElement>>(new Map());
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const issues = useMemo(() => result?.issues ?? [], [result]);
 
@@ -339,42 +339,32 @@ export default function GrammarPage() {
     cardRefs.current.get(activeIndex)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }, [activeIndex]);
 
-  const handleCheck = useCallback(async () => {
-    if (!draft.trim()) return;
-    setLoading(true);
+  const handleCheck = useCallback(async (textToCheck: string) => {
+    if (!textToCheck.trim()) return;
+    setIsChecking(true);
     setError(null);
-    setResult(null);
     setSavedId(null);
-    setDismissed(new Set());
-    setAccepted(new Set());
-    setActiveIndex(null);
-    setActiveTab('all');
     try {
-      const resp = await submitGrammar({ text: draft, save });
+      const resp = await submitGrammar({ text: textToCheck, save });
       setResult(resp);
-      setWorkingText(draft);
+      setWorkingText(textToCheck);
       setWorkingIssues(resp.issues);
+      setDismissed(new Set());
+      setAccepted(new Set());
+      setActiveIndex(null);
+      setActiveTab('all');
+      setIsReviewing(true);
       if (save && resp.document_id) {
         setSavedId(resp.document_id);
-        addSavedDoc({ id: resp.document_id, createdAt: new Date().toISOString(), snippet: draft.slice(0, 80) });
+        addSavedDoc({ id: resp.document_id, createdAt: new Date().toISOString(), snippet: textToCheck.slice(0, 80) });
         clearDraft();
       }
     } catch (e) {
       setError(errorMsg(e));
     } finally {
-      setLoading(false);
+      setIsChecking(false);
     }
-  }, [draft, save, clearDraft]);
-
-  // 800ms debounce auto-check while in editing mode
-  useEffect(() => {
-    if (result !== null || !draft.trim()) return;
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(handleCheck, 800);
-    return () => {
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-    };
-  }, [draft, result, handleCheck]);
+  }, [save, clearDraft]);
 
   function handleAccept(idx: number) {
     const issue = workingIssues[idx];
@@ -419,12 +409,8 @@ export default function GrammarPage() {
     if (activeIndex === idx) setActiveIndex(null);
   }
 
-  function handleReset() {
-    setResult(null);
-    setDismissed(new Set());
-    setAccepted(new Set());
-    setActiveIndex(null);
-    setActiveTab('all');
+  function handleEdit() {
+    setIsReviewing(false);
     if (workingText) setDraft(workingText);
   }
 
@@ -443,7 +429,7 @@ export default function GrammarPage() {
             <Mono className="text-[0.625rem] text-stone-400">{words} words</Mono>
           </div>
 
-          {!result ? (
+          {!isReviewing ? (
             <Textarea
               placeholder="Paste or type your draft here…"
               value={draft}
@@ -464,19 +450,19 @@ export default function GrammarPage() {
           )}
 
           <div className="flex flex-wrap items-center gap-3 mt-5">
-            {!result ? (
+            {!isReviewing ? (
               <>
                 <label className="flex items-center gap-2 cursor-pointer" htmlFor="grammar-save-switch">
                   <Switch id="grammar-save-switch" checked={save} onCheckedChange={setSave} size="sm" />
                   <SectionLabel as="span">Save draft</SectionLabel>
                 </label>
-                <Button size="sm" onClick={handleCheck} disabled={loading || !draft.trim()} className="text-xs ml-auto">
-                  {loading ? 'Checking…' : 'Check Grammar'}
+                <Button size="sm" onClick={() => handleCheck(draft)} disabled={isChecking || !draft.trim()} className="text-xs ml-auto">
+                  {isChecking ? 'Checking…' : 'Check Grammar'}
                 </Button>
                 <Button
                   variant="secondary"
                   size="sm"
-                  onClick={() => { setDraft(''); setResult(null); setError(null); }}
+                  onClick={() => { setDraft(''); setResult(null); setError(null); setIsReviewing(false); }}
                   className="text-xs"
                 >
                   Clear
@@ -484,8 +470,11 @@ export default function GrammarPage() {
               </>
             ) : (
               <>
-                <Button variant="secondary" size="sm" onClick={handleReset} className="text-xs">
-                  Check again
+                <Button variant="secondary" size="sm" onClick={() => handleCheck(workingText)} disabled={isChecking} className="text-xs">
+                  {isChecking ? 'Checking…' : 'Check again'}
+                </Button>
+                <Button variant="secondary" size="sm" onClick={handleEdit} disabled={isChecking} className="text-xs">
+                  Edit
                 </Button>
                 {accepted.size > 0 && (
                   <span className="font-sans text-xs text-stone-500">
@@ -507,7 +496,7 @@ export default function GrammarPage() {
         className="w-[38%] min-w-[340px] max-w-[480px] shrink-0 border-l border-stone-200 flex flex-col bg-cream"
         aria-label="Grammar results"
         aria-live="polite"
-        aria-busy={loading}
+        aria-busy={isChecking}
       >
         {/* Sticky header */}
         <div className="sticky top-0 z-10 bg-cream border-b border-stone-200 shrink-0">
@@ -570,11 +559,11 @@ export default function GrammarPage() {
 
         {/* Scrollable card list */}
         <div className="flex-1 overflow-y-auto p-4 space-y-3">
-          {loading && (
+          {isChecking && !result && (
             <p className="font-sans text-xs text-stone-400 text-center py-10">Checking grammar…</p>
           )}
 
-          {result && totalUnresolved === 0 && (
+          {result && totalUnresolved === 0 && !isChecking && (
             <div className="rounded-xl border border-green-200 bg-green-50 px-5 py-8 text-center mt-4">
               <p className="font-sans text-sm font-semibold text-green-800 mb-1">
                 {issues.length === 0 ? 'No issues found!' : 'All issues resolved!'}
@@ -601,7 +590,7 @@ export default function GrammarPage() {
             />
           ))}
 
-          {!loading && !result && (
+          {!result && !isChecking && (
             <p className="font-sans text-sm text-stone-400 leading-relaxed py-4 text-center">
               Results will appear here after you check your draft.
             </p>
