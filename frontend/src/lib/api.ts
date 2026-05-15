@@ -74,6 +74,66 @@ export interface RewriteDocumentEvent {
 }
 
 // ---------------------------------------------------------------------------
+// Grammar types (mirrors backend/app/schemas/grammar.py)
+// ---------------------------------------------------------------------------
+
+export type GrammarIssueType = 'grammar' | 'spelling' | 'punctuation' | 'style';
+
+export interface GrammarIssue {
+  type: GrammarIssueType;
+  original: string;
+  suggestion: string;
+  explanation: string;
+}
+
+export interface GrammarRequest {
+  text: string;
+  save?: boolean;
+}
+
+export interface GrammarResponse {
+  request_id: string;
+  issues: GrammarIssue[];
+  corrected_text: string;
+  overall_quality: 'Poor' | 'Fair' | 'Good' | 'Excellent';
+  model_used: string;
+  tokens_used: TokenUsage;
+  document_id: string | null;
+}
+
+// ---------------------------------------------------------------------------
+// Paraphrase types (mirrors backend/app/schemas/paraphrase.py)
+// ---------------------------------------------------------------------------
+
+export type ParaphraseMode = 'standard' | 'simpler' | 'shorter' | 'academic' | 'creative';
+
+export interface ParaphraseRequest {
+  text: string;
+  mode?: ParaphraseMode;
+  save?: boolean;
+}
+
+export interface ParaphraseTokenEvent {
+  text: string;
+}
+
+export interface ParaphraseDoneEvent {
+  request_id: string;
+  model_used: string;
+  tokens_used: TokenUsage;
+  latency_ms: number;
+}
+
+export interface ParaphraseErrorEvent {
+  request_id: string;
+  message: string;
+}
+
+export interface ParaphraseDocumentEvent {
+  document_id: string;
+}
+
+// ---------------------------------------------------------------------------
 // Document types (mirrors backend/app/schemas/documents.py)
 // ---------------------------------------------------------------------------
 
@@ -90,12 +150,28 @@ export interface RewriteRead {
   created_at: string;
 }
 
+export interface GrammarCheckRead {
+  id: string;
+  result: Record<string, unknown>;
+  corrected_text: string;
+  created_at: string;
+}
+
+export interface ParaphraseRead {
+  id: string;
+  mode: string;
+  output: string;
+  created_at: string;
+}
+
 export interface DocumentRead {
   id: string;
   original_text: string;
   created_at: string;
   feedbacks: FeedbackRead[];
   rewrites: RewriteRead[];
+  grammar_checks: GrammarCheckRead[];
+  paraphrases: ParaphraseRead[];
 }
 
 // ---------------------------------------------------------------------------
@@ -149,6 +225,41 @@ export async function streamRewrite(
     done: (data) => handlers.onDone(data as RewriteDoneEvent),
     error: (data) => handlers.onError(data as RewriteErrorEvent),
     document: (data) => handlers.onDocument(data as RewriteDocumentEvent),
+  });
+}
+
+export async function submitGrammar(
+  req: GrammarRequest
+): Promise<GrammarResponse> {
+  const res = await fetch(`${baseUrl()}/api/v1/grammar`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(req),
+  });
+  await throwIfNotOk(res);
+  return res.json() as Promise<GrammarResponse>;
+}
+
+export async function streamParaphrase(
+  req: ParaphraseRequest,
+  handlers: {
+    onToken: (evt: ParaphraseTokenEvent) => void;
+    onDone: (evt: ParaphraseDoneEvent) => void;
+    onError: (evt: ParaphraseErrorEvent) => void;
+    onDocument: (evt: ParaphraseDocumentEvent) => void;
+  }
+): Promise<void> {
+  const res = await fetch(`${baseUrl()}/api/v1/paraphrase`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(req),
+  });
+  await throwIfNotOk(res);
+  await parseSSE(res, {
+    token: (data) => handlers.onToken(data as ParaphraseTokenEvent),
+    done: (data) => handlers.onDone(data as ParaphraseDoneEvent),
+    error: (data) => handlers.onError(data as ParaphraseErrorEvent),
+    document: (data) => handlers.onDocument(data as ParaphraseDocumentEvent),
   });
 }
 

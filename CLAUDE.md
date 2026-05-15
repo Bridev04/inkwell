@@ -8,7 +8,7 @@ Keep it updated as the project evolves.
 
 **Name:** Draftwell  
 **Purpose:** AI-powered writing assistant. Users submit drafts, receive feedback, rewrites, and tone analysis. Authenticated, with per-user history.  
-**Stage:** Phase 2 — Frontend scaffold (plumbing only; no design)  
+**Stage:** Phase 3 — Grammar checker, paraphraser, Writing Desk redesign  
 
 ## Tech Stack & Decisions
 
@@ -105,6 +105,17 @@ backend/app/
    - [x] Saved drafts list and detail pages composed with the design system
    - [x] Component tests (Vitest + RTL) for streaming, persistence, and page rendering
    - [x] A11y: skip link, aria-live regions, real heading hierarchy, keyboard focus throughout
+   - [x] Grammar checker: `POST /api/v1/grammar` — structured issue list + corrected text (GrammarCheck ORM model + JSONB storage)
+   - [x] Paraphraser: `POST /api/v1/paraphrase` — streamed SSE rewrite with 5 modes (standard, simpler, shorter, academic, creative)
+   - [x] Migration `b2c3d4e5f6a7`: `grammar_checks` and `paraphrases` tables with FK → documents
+   - [x] `DocumentRead` extended to include `grammar_checks` and `paraphrases` arrays
+   - [x] Frontend redesign: 3-column Writing Desk layout (sidebar | editor | right panel)
+   - [x] Sidebar component with logo + nav (Dashboard, Writing Desk, Documents, Settings) + active-link state
+   - [x] `(app)` Next.js route group: `/desk`, `/documents`, `/documents/[id]` all share sidebar layout
+   - [x] Writing Desk page: all 5 tools (Feedback, Rewrite, Grammar, Paraphrase, Tone) in one unified page
+   - [x] Grammar panel in right panel: issue list by type, inline corrected-text toggle
+   - [x] Paraphrase streaming panel with TypewriterStream in right panel
+   - [x] Home page simplified to hero + CTA → `/desk`
 
 ### Up Next
 - [ ] User model + JWT auth
