@@ -26,11 +26,31 @@ class RewriteRead(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class GrammarCheckRead(BaseModel):
+    id: uuid.UUID
+    result: dict[str, Any]
+    corrected_text: str
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class ParaphraseRead(BaseModel):
+    id: uuid.UUID
+    mode: str
+    output: str
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
 class DocumentRead(BaseModel):
     id: uuid.UUID
     original_text: str
     created_at: datetime
     feedbacks: list[FeedbackRead]
     rewrites: list[RewriteRead]
+    grammar_checks: list[GrammarCheckRead]
+    paraphrases: list[ParaphraseRead]
 
     model_config = {"from_attributes": True}

@@ -14,6 +14,8 @@ from app.db.base import Base
 
 if TYPE_CHECKING:
     from app.models.feedback import Feedback
+    from app.models.grammar_check import GrammarCheck
+    from app.models.paraphrase import Paraphrase
     from app.models.rewrite import Rewrite
 
 
@@ -34,4 +36,10 @@ class Document(Base):
     )
     rewrites: Mapped[list[Rewrite]] = relationship(
         "Rewrite", back_populates="document", lazy="raise"
+    )
+    grammar_checks: Mapped[list[GrammarCheck]] = relationship(
+        "GrammarCheck", back_populates="document", lazy="raise"
+    )
+    paraphrases: Mapped[list[Paraphrase]] = relationship(
+        "Paraphrase", back_populates="document", lazy="raise"
     )

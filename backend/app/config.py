@@ -35,6 +35,12 @@ class Settings(BaseSettings):
     # Rewrites endpoint
     rewrite_max_text_chars: int = Field(default=10_000)
 
+    # Grammar checker endpoint
+    grammar_max_text_chars: int = Field(default=10_000)
+
+    # Paraphrase endpoint
+    paraphrase_max_text_chars: int = Field(default=10_000)
+
     # CORS
     # Allowlist of origins permitted to make cross-origin requests (browser clients).
     # Set CORS_ALLOWED_ORIGINS as a comma-separated string to add additional origins
