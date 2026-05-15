@@ -2,12 +2,18 @@
 
 from __future__ import annotations
 
+from enum import StrEnum
 from typing import Literal
 from uuid import UUID
 
 from pydantic import BaseModel, Field
 
-from app.services.llm.schemas import TokenUsage
+
+class IssueCategory(StrEnum):
+    grammar = "grammar"
+    spelling = "spelling"
+    punctuation = "punctuation"
+    style = "style"
 
 
 class GrammarRequest(BaseModel):
@@ -16,17 +22,27 @@ class GrammarRequest(BaseModel):
 
 
 class GrammarIssue(BaseModel):
-    type: Literal["grammar", "spelling", "punctuation", "style"]
+    id: str
+    category: IssueCategory
+    start: int = Field(ge=0)
+    end: int = Field(ge=0)
     original: str
-    suggestion: str
+    replacement: str
+    short_label: str
     explanation: str
 
 
+class GrammarScores(BaseModel):
+    grammar: int = Field(ge=0, le=100)
+    spelling: int = Field(ge=0, le=100)
+    punctuation: int = Field(ge=0, le=100)
+    style: int = Field(ge=0, le=100)
+    overall: int = Field(ge=0, le=100)
+    overall_label: Literal["Needs work", "Fair", "Good", "Great"]
+
+
 class GrammarResponse(BaseModel):
-    request_id: UUID
-    issues: list[GrammarIssue]
-    corrected_text: str
-    overall_quality: Literal["Poor", "Fair", "Good", "Excellent"]
-    model_used: str
-    tokens_used: TokenUsage
     document_id: UUID | None = None
+    issues: list[GrammarIssue]
+    scores: GrammarScores
+    word_count: int = Field(ge=0)

@@ -45,7 +45,7 @@ async def create_grammar_check(
                 session,
                 original_text=req.text,
                 result=response.model_dump(mode="json", exclude={"document_id"}),
-                corrected_text=response.corrected_text,
+                corrected_text="",
             )
             response = response.model_copy(update={"document_id": doc_id})
         except Exception:

@@ -72,9 +72,7 @@ def upgrade() -> None:
         ),
         sa.PrimaryKeyConstraint("id", name="pk_paraphrases"),
     )
-    op.create_index(
-        "ix_paraphrases_document_id", "paraphrases", ["document_id"], unique=False
-    )
+    op.create_index("ix_paraphrases_document_id", "paraphrases", ["document_id"], unique=False)
 
 
 def downgrade() -> None:

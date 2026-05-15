@@ -116,6 +116,11 @@ backend/app/
    - [x] Grammar panel in right panel: issue list by type, inline corrected-text toggle
    - [x] Paraphrase streaming panel with TypewriterStream in right panel
    - [x] Home page simplified to hero + CTA → `/desk`
+   - [x] QuillBot-style grammar checker v2: offset-based inline underlines, per-category score rings, Accept/Ignore with offset shifting
+   - [x] New `GrammarIssue` schema: id, category, start, end, original, replacement, short_label, explanation
+   - [x] New `GrammarScores` schema: per-category + overall score (0-100) + label (Needs work / Fair / Good / Great)
+   - [x] Deterministic scoring formula in `grammar_service.py`; 19 backend tests covering all branches
+   - [x] Grammar checker UX: manual-only checks (no debounce auto-trigger on paste/edit); `isReviewing` + `isChecking` state model so "Check again" re-checks in-place without clearing the panel; "Edit" button returns to textarea with accepted-fixes text while keeping panel results visible
 
 ### Up Next
 - [ ] User model + JWT auth

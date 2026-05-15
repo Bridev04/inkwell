@@ -77,13 +77,26 @@ export interface RewriteDocumentEvent {
 // Grammar types (mirrors backend/app/schemas/grammar.py)
 // ---------------------------------------------------------------------------
 
-export type GrammarIssueType = 'grammar' | 'spelling' | 'punctuation' | 'style';
+export type GrammarIssueCategory = 'grammar' | 'spelling' | 'punctuation' | 'style';
 
 export interface GrammarIssue {
-  type: GrammarIssueType;
+  id: string;
+  category: GrammarIssueCategory;
+  start: number;
+  end: number;
   original: string;
-  suggestion: string;
+  replacement: string;
+  short_label: string;
   explanation: string;
+}
+
+export interface GrammarScores {
+  grammar: number;
+  spelling: number;
+  punctuation: number;
+  style: number;
+  overall: number;
+  overall_label: 'Needs work' | 'Fair' | 'Good' | 'Great';
 }
 
 export interface GrammarRequest {
@@ -92,13 +105,10 @@ export interface GrammarRequest {
 }
 
 export interface GrammarResponse {
-  request_id: string;
-  issues: GrammarIssue[];
-  corrected_text: string;
-  overall_quality: 'Poor' | 'Fair' | 'Good' | 'Excellent';
-  model_used: string;
-  tokens_used: TokenUsage;
   document_id: string | null;
+  issues: GrammarIssue[];
+  scores: GrammarScores;
+  word_count: number;
 }
 
 // ---------------------------------------------------------------------------
