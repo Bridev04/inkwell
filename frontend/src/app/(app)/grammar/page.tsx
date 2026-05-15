@@ -11,7 +11,7 @@ import { addSavedDoc } from '@/lib/savedDocs';
 import { useDraftPersistence } from '@/lib/useDraftPersistence';
 
 // ---------------------------------------------------------------------------
-// Constants
+// Constants & scoring
 // ---------------------------------------------------------------------------
 
 const CATEGORY_STYLE: Record<string, { underline: string; activeBg: string; badge: string; dot: string }> = {
@@ -20,6 +20,33 @@ const CATEGORY_STYLE: Record<string, { underline: string; activeBg: string; badg
   punctuation: { underline: 'decoration-blue-400',   activeBg: 'bg-blue-50',   badge: 'bg-blue-100 text-blue-800',    dot: 'bg-blue-400' },
   style:       { underline: 'decoration-purple-400', activeBg: 'bg-purple-50', badge: 'bg-purple-100 text-purple-800', dot: 'bg-purple-400' },
 };
+
+// Mirrors the backend _compute_scores formula exactly.
+// score = max(0, 100 - floor(count * penalty * 100 / wordCount))
+// overall = min of all four categories
+const _PENALTY: Record<string, number> = { grammar: 15, spelling: 18, punctuation: 12, style: 8 };
+
+function computeScores(
+  issues: GrammarIssue[],
+  unresolvedSet: Set<number>,
+  wordCount: number,
+): GrammarScores {
+  const wc = Math.max(wordCount, 1);
+  const counts: Record<string, number> = { grammar: 0, spelling: 0, punctuation: 0, style: 0 };
+  issues.forEach((issue, idx) => {
+    if (unresolvedSet.has(idx)) counts[issue.category] = (counts[issue.category] ?? 0) + 1;
+  });
+  const score = (kind: string) =>
+    Math.max(0, 100 - Math.floor((counts[kind] * _PENALTY[kind] * 100) / wc));
+  const g = score('grammar');
+  const s = score('spelling');
+  const p = score('punctuation');
+  const st = score('style');
+  const overall = Math.min(g, s, p, st);
+  const overall_label: GrammarScores['overall_label'] =
+    overall >= 85 ? 'Great' : overall >= 70 ? 'Good' : overall >= 50 ? 'Fair' : 'Needs work';
+  return { grammar: g, spelling: s, punctuation: p, style: st, overall, overall_label };
+}
 
 function wordCount(text: string): number {
   return text.trim() ? text.trim().split(/\s+/).length : 0;
@@ -226,7 +253,7 @@ function ScoreBar({ scores }: { scores: GrammarScores }) {
   ];
 
   return (
-    <div className="border-t border-stone-200 bg-stone-50 px-4 py-3">
+    <div className="border-t border-stone-200 bg-stone-100/50 px-4 py-3">
       <div className="flex justify-around items-center gap-2">
         {metrics.map((m) => (
           <ScoreRing key={m.label} value={m.value} label={m.label} />
@@ -273,6 +300,11 @@ export default function GrammarPage() {
     });
     return s;
   }, [issues, dismissed, accepted]);
+
+  const liveScores = useMemo(
+    () => (result ? computeScores(workingIssues, unresolvedSet, result.word_count) : null),
+    [workingIssues, unresolvedSet, result],
+  );
 
   const tabVisibleSet = useMemo(() => {
     if (activeTab === 'all') return unresolvedSet;
@@ -472,23 +504,23 @@ export default function GrammarPage() {
 
       {/* ── Results panel ──────────────────────────────────────────────── */}
       <aside
-        className="w-[38%] min-w-[340px] max-w-[480px] shrink-0 border-l border-stone-200 flex flex-col bg-white"
+        className="w-[38%] min-w-[340px] max-w-[480px] shrink-0 border-l border-stone-200 flex flex-col bg-cream"
         aria-label="Grammar results"
         aria-live="polite"
         aria-busy={loading}
       >
         {/* Sticky header */}
-        <div className="sticky top-0 z-10 bg-white border-b border-stone-200 shrink-0">
+        <div className="sticky top-0 z-10 bg-cream border-b border-stone-200 shrink-0">
           <div className="px-5 py-3 flex items-center justify-between">
             <h2 className="font-sans text-sm font-semibold text-ink">Grammar Checker</h2>
-            {result && (
+            {liveScores && (
               <span className={`font-sans text-xs px-2 py-0.5 rounded-full ${
-                result.scores.overall_label === 'Great'      ? 'bg-green-100 text-green-800' :
-                result.scores.overall_label === 'Good'       ? 'bg-stone-100 text-stone-700' :
-                result.scores.overall_label === 'Fair'       ? 'bg-amber-100 text-amber-800' :
-                                                               'bg-red-100 text-red-800'
+                liveScores.overall_label === 'Great'      ? 'bg-green-100 text-green-800' :
+                liveScores.overall_label === 'Good'       ? 'bg-stone-100 text-stone-700' :
+                liveScores.overall_label === 'Fair'       ? 'bg-amber-100 text-amber-800' :
+                                                            'bg-red-100 text-red-800'
               }`}>
-                {result.scores.overall_label}
+                {liveScores.overall_label}
               </span>
             )}
           </div>
@@ -520,7 +552,7 @@ export default function GrammarPage() {
               </div>
 
               {totalUnresolved > 0 && (
-                <div className="flex items-center justify-between px-5 py-2 bg-stone-50">
+                <div className="flex items-center justify-between px-5 py-2 bg-stone-100/50">
                   <span className="font-sans text-xs text-stone-500">
                     {totalUnresolved} suggestion{totalUnresolved !== 1 ? 's' : ''}
                   </span>
@@ -585,8 +617,8 @@ export default function GrammarPage() {
           )}
         </div>
 
-        {/* Score rings */}
-        {result && <ScoreBar scores={result.scores} />}
+        {/* Score rings — live scores derived from remaining unresolved issues */}
+        {liveScores && <ScoreBar scores={liveScores} />}
       </aside>
     </div>
   );
