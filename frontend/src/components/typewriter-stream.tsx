@@ -7,6 +7,7 @@ interface TypewriterStreamProps {
   isStreaming: boolean;
   reducedMotion: boolean;
   onComplete?: () => void;
+  className?: string;
 }
 
 // Reveals text at ~80 chars/sec (2 chars/frame at 60fps) to produce a measured
@@ -16,6 +17,7 @@ export function TypewriterStream({
   isStreaming,
   reducedMotion,
   onComplete,
+  className,
 }: TypewriterStreamProps) {
   const [displayed, setDisplayed] = useState('');
 
@@ -88,7 +90,7 @@ export function TypewriterStream({
       role="region"
       aria-live="polite"
       aria-busy={isStreaming}
-      className="min-h-48 font-serif leading-relaxed text-ink text-lg max-w-prose whitespace-pre-wrap"
+      className={`min-h-48 leading-relaxed text-ink whitespace-pre-wrap ${className ?? 'font-serif text-lg max-w-prose'}`}
     >
       {reducedMotion && isStreaming && (
         <span className="font-mono text-stone-600 text-xs">Writing…</span>

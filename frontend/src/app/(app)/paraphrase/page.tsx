@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { TypewriterStream } from '@/components/typewriter-stream';
-import { SectionLabel, BodyProse, Mono } from '@/components/typography';
+import { SectionLabel, Mono } from '@/components/typography';
 import { Hairline } from '@/components/hairline';
 import {
   streamParaphrase,
@@ -16,12 +16,14 @@ import {
 import { addSavedDoc } from '@/lib/savedDocs';
 import { useDraftPersistence } from '@/lib/useDraftPersistence';
 
+const WORD_LIMIT = 150;
+
 const PARAPHRASE_MODES: { value: ParaphraseMode; label: string; description: string }[] = [
-  { value: 'standard', label: 'Standard', description: 'Rephrase while keeping the original meaning' },
-  { value: 'simpler', label: 'Simpler', description: 'Use plainer language and shorter sentences' },
-  { value: 'shorter', label: 'Shorter', description: 'Cut to the core idea' },
-  { value: 'academic', label: 'Academic', description: 'Formal, scholarly tone' },
-  { value: 'creative', label: 'Creative', description: 'More expressive and varied phrasing' },
+  { value: 'standard', label: 'Standard',  description: 'Rephrase while keeping the original meaning' },
+  { value: 'simpler',  label: 'Simpler',   description: 'Use plainer language and shorter sentences' },
+  { value: 'shorter',  label: 'Shorter',   description: 'Cut to the core idea' },
+  { value: 'academic', label: 'Academic',  description: 'Formal, scholarly tone' },
+  { value: 'creative', label: 'Creative',  description: 'More expressive and varied phrasing' },
 ];
 
 function wordCount(text: string): number {
@@ -40,6 +42,7 @@ function errorMsg(e: unknown): string {
 export default function ParaphrasePage() {
   const [draft, setDraft, clearDraft] = useDraftPersistence('draftwell:paraphrase-composer');
   const words = wordCount(draft);
+  const overLimit = words > WORD_LIMIT;
 
   const [mode, setMode] = useState<ParaphraseMode>('standard');
   const [save, setSave] = useState(false);
@@ -55,7 +58,7 @@ export default function ParaphrasePage() {
   }, []);
 
   async function handleParaphrase() {
-    if (!draft.trim()) return;
+    if (!draft.trim() || overLimit) return;
     setLoading(true);
     setIsStreaming(true);
     setError(null);
@@ -99,17 +102,23 @@ export default function ParaphrasePage() {
             </p>
           </div>
 
+          {/* Word count bar */}
           <div className="flex items-center gap-3 mb-4">
             <Mono className="text-[0.625rem] uppercase tracking-widest text-stone-500">Draft</Mono>
             <span className="text-stone-300">·</span>
-            <Mono className="text-[0.625rem] text-stone-500">Words: {words}</Mono>
+            <Mono className={`text-[0.625rem] tabular-nums ${overLimit ? 'text-red-600 font-semibold' : 'text-stone-500'}`}>
+              {words} / {WORD_LIMIT} words
+            </Mono>
+            {overLimit && (
+              <span className="font-sans text-[0.625rem] text-red-600">— trim to {WORD_LIMIT} words or fewer</span>
+            )}
           </div>
 
           <Textarea
             placeholder="Paste or type your draft here…"
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
-            className="min-h-[320px] font-serif text-base leading-relaxed"
+            className={`min-h-[320px] font-serif text-base leading-relaxed ${overLimit ? 'border-red-300 focus-visible:ring-red-400' : ''}`}
             aria-label="Your draft"
           />
 
@@ -143,7 +152,12 @@ export default function ParaphrasePage() {
           </div>
 
           <div className="flex gap-2 mt-5">
-            <Button size="sm" onClick={handleParaphrase} disabled={isBusy || !draft.trim()} className="text-xs">
+            <Button
+              size="sm"
+              onClick={handleParaphrase}
+              disabled={isBusy || !draft.trim() || overLimit}
+              className="text-xs"
+            >
               {isStreaming ? 'Paraphrasing…' : 'Paraphrase'}
             </Button>
             <Button
@@ -164,9 +178,9 @@ export default function ParaphrasePage() {
         </div>
       </main>
 
-      {/* Results panel */}
+      {/* Results panel — auto-width between 340–480px */}
       <aside
-        className="w-80 shrink-0 border-l border-stone-300 overflow-y-auto bg-cream"
+        className="w-[38%] min-w-[340px] max-w-[480px] shrink-0 border-l border-stone-300 overflow-y-auto bg-cream"
         aria-label="Paraphrase result"
         aria-live="polite"
         aria-busy={isBusy}
@@ -180,7 +194,12 @@ export default function ParaphrasePage() {
                 </SectionLabel>
                 <Hairline variant="gold" className="mb-3" />
               </div>
-              <TypewriterStream fullText={outputText} isStreaming={isStreaming} reducedMotion={reducedMotion} />
+              <TypewriterStream
+                fullText={outputText}
+                isStreaming={isStreaming}
+                reducedMotion={reducedMotion}
+                className="font-sans text-sm leading-7 text-ink max-w-prose"
+              />
               {!isStreaming && savedId && (
                 <Mono className="block text-xs">
                   Saved ·{' '}
@@ -191,9 +210,9 @@ export default function ParaphrasePage() {
               )}
             </>
           ) : (
-            <BodyProse className="text-sm text-stone-400">
+            <p className="font-sans text-sm text-stone-400 leading-relaxed">
               Your paraphrased text will appear here.
-            </BodyProse>
+            </p>
           )}
         </div>
       </aside>

@@ -5,9 +5,9 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
-import { SectionLabel, BodyProse, Mono } from '@/components/typography';
+import { SectionLabel, Mono } from '@/components/typography';
 import { Hairline } from '@/components/hairline';
-import { submitGrammar, type GrammarResponse } from '@/lib/api';
+import { submitGrammar, type GrammarResponse, type GrammarIssue } from '@/lib/api';
 import { addSavedDoc } from '@/lib/savedDocs';
 import { useDraftPersistence } from '@/lib/useDraftPersistence';
 
@@ -17,6 +17,22 @@ const QUALITY_COLOR: Record<string, string> = {
   Fair: 'text-amber-700',
   Poor: 'text-red-700',
 };
+
+const QUALITY_BG: Record<string, string> = {
+  Excellent: 'bg-green-50 border-green-200',
+  Good: 'bg-stone-50 border-stone-200',
+  Fair: 'bg-amber-50 border-amber-200',
+  Poor: 'bg-red-50 border-red-200',
+};
+
+function typeStyles(type: string): { badge: string; accent: string } {
+  const t = type.toLowerCase();
+  if (t === 'spelling')    return { badge: 'bg-red-100 text-red-700',    accent: 'border-l-red-400' };
+  if (t === 'grammar')     return { badge: 'bg-amber-100 text-amber-700', accent: 'border-l-amber-400' };
+  if (t === 'punctuation') return { badge: 'bg-blue-100 text-blue-700',   accent: 'border-l-blue-400' };
+  if (t === 'style')       return { badge: 'bg-purple-100 text-purple-700', accent: 'border-l-purple-400' };
+  return                          { badge: 'bg-stone-100 text-stone-600', accent: 'border-l-stone-400' };
+}
 
 function wordCount(text: string): number {
   return text.trim() ? text.trim().split(/\s+/).length : 0;
@@ -29,6 +45,23 @@ function errorMsg(e: unknown): string {
   if (e.message.startsWith('HTTP 5'))
     return 'The server ran into a problem. Try again in a moment.';
   return "Couldn't reach the server. Check your connection and try again.";
+}
+
+function IssueCard({ issue }: { issue: GrammarIssue }) {
+  const { badge, accent } = typeStyles(issue.type);
+  return (
+    <li className={`rounded-lg border border-stone-200 border-l-4 ${accent} bg-cream/80 p-4 space-y-2`}>
+      <span className={`inline-block text-[0.6rem] font-mono uppercase tracking-widest px-1.5 py-0.5 rounded ${badge}`}>
+        {issue.type}
+      </span>
+      <div className="flex items-baseline flex-wrap gap-x-2 gap-y-0.5">
+        <span className="font-sans text-sm line-through text-stone-400">{issue.original}</span>
+        <span className="font-sans text-stone-400 text-xs">→</span>
+        <span className="font-sans text-sm font-semibold text-ink">{issue.suggestion}</span>
+      </div>
+      <p className="font-sans text-xs text-stone-500 leading-relaxed">{issue.explanation}</p>
+    </li>
+  );
 }
 
 export default function GrammarPage() {
@@ -101,7 +134,12 @@ export default function GrammarPage() {
             <Button size="sm" onClick={handleCheck} disabled={loading || !draft.trim()} className="text-xs">
               {loading ? 'Checking…' : 'Check Grammar'}
             </Button>
-            <Button variant="secondary" size="sm" onClick={() => { setDraft(''); setResult(null); setSavedId(null); setError(null); }} className="text-xs">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => { setDraft(''); setResult(null); setSavedId(null); setError(null); }}
+              className="text-xs"
+            >
               Clear
             </Button>
           </div>
@@ -114,9 +152,9 @@ export default function GrammarPage() {
         </div>
       </main>
 
-      {/* Results panel */}
+      {/* Results panel — auto-width between 340–480px */}
       <aside
-        className="w-80 shrink-0 border-l border-stone-300 overflow-y-auto bg-cream"
+        className="w-[38%] min-w-[340px] max-w-[480px] shrink-0 border-l border-stone-300 overflow-y-auto bg-cream"
         aria-label="Grammar results"
         aria-live="polite"
         aria-busy={loading}
@@ -129,59 +167,52 @@ export default function GrammarPage() {
           {result && (
             <>
               <div>
-                <SectionLabel className="block mb-1">Grammar Check</SectionLabel>
-                <Hairline variant="gold" className="mb-3" />
+                <SectionLabel className="block mb-1">Results</SectionLabel>
+                <Hairline variant="gold" className="mb-4" />
               </div>
 
-              <div className="flex items-center gap-2">
-                <span className="font-sans text-xs text-stone-500">Quality:</span>
-                <span className={`font-sans text-sm font-medium ${QUALITY_COLOR[result.overall_quality] ?? 'text-ink'}`}>
-                  {result.overall_quality}
-                </span>
-                <span className="font-sans text-xs text-stone-500 ml-auto">
-                  {result.issues.length} issue{result.issues.length !== 1 ? 's' : ''}
-                </span>
+              {/* Quality badge */}
+              <div className={`flex items-center justify-between rounded-lg border px-4 py-3 ${QUALITY_BG[result.overall_quality] ?? 'bg-stone-50 border-stone-200'}`}>
+                <div>
+                  <p className="font-sans text-[0.6rem] uppercase tracking-widest text-stone-500 mb-0.5">Overall Quality</p>
+                  <p className={`font-sans text-base font-semibold ${QUALITY_COLOR[result.overall_quality] ?? 'text-ink'}`}>
+                    {result.overall_quality}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="font-sans text-[0.6rem] uppercase tracking-widest text-stone-500 mb-0.5">Issues Found</p>
+                  <p className="font-sans text-base font-semibold text-ink">{result.issues.length}</p>
+                </div>
               </div>
 
               {result.issues.length === 0 ? (
-                <BodyProse className="text-sm text-stone-500">No issues found. Great writing!</BodyProse>
+                <div className="rounded-lg border border-green-200 bg-green-50 px-4 py-3">
+                  <p className="font-sans text-sm text-green-700">No issues found. Great writing!</p>
+                </div>
               ) : (
                 <ul className="space-y-3">
                   {result.issues.map((issue, i) => (
-                    <li key={i} className="border border-stone-300 rounded-md p-3 space-y-1">
-                      <div className="flex items-start gap-2">
-                        <span className="font-mono text-[0.625rem] uppercase tracking-wide text-stone-500 mt-0.5 shrink-0">
-                          {issue.type}
-                        </span>
-                        <div className="min-w-0">
-                          <span className="font-sans text-xs line-through text-stone-500 mr-1">
-                            {issue.original}
-                          </span>
-                          <span className="font-sans text-xs font-medium text-ink">
-                            → {issue.suggestion}
-                          </span>
-                        </div>
-                      </div>
-                      <BodyProse className="text-xs text-stone-500 leading-relaxed">
-                        {issue.explanation}
-                      </BodyProse>
-                    </li>
+                    <IssueCard key={i} issue={issue} />
                   ))}
                 </ul>
               )}
 
               {result.issues.length > 0 && (
-                <button
-                  onClick={() => setShowCorrected((v) => !v)}
-                  className="font-sans text-xs text-ink underline decoration-stone-300 underline-offset-4 hover:decoration-gold transition-colors"
-                >
-                  {showCorrected ? 'Hide corrected text' : 'Show corrected text'}
-                </button>
+                <>
+                  <Hairline />
+                  <button
+                    onClick={() => setShowCorrected((v) => !v)}
+                    className="font-sans text-xs text-ink underline decoration-stone-300 underline-offset-4 hover:decoration-gold transition-colors"
+                  >
+                    {showCorrected ? 'Hide corrected text' : 'Show corrected text'}
+                  </button>
+                </>
               )}
 
               {showCorrected && (
-                <div className="border border-stone-300 rounded-md p-4 bg-stone-300/10">
-                  <BodyProse className="text-sm whitespace-pre-wrap">{result.corrected_text}</BodyProse>
+                <div className="rounded-lg border border-stone-200 p-4 bg-stone-50">
+                  <p className="font-sans text-xs uppercase tracking-widest text-stone-400 mb-3">Corrected</p>
+                  <p className="font-sans text-sm leading-relaxed text-ink whitespace-pre-wrap">{result.corrected_text}</p>
                 </div>
               )}
 
@@ -197,9 +228,9 @@ export default function GrammarPage() {
           )}
 
           {!loading && !result && (
-            <BodyProse className="text-sm text-stone-400">
+            <p className="font-sans text-sm text-stone-400 leading-relaxed">
               Results will appear here after you check your draft.
-            </BodyProse>
+            </p>
           )}
         </div>
       </aside>
