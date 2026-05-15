@@ -125,7 +125,7 @@ def test_compute_scores_empty_text_no_issues() -> None:
 
 
 def test_compute_scores_low_score_needs_work() -> None:
-    # 7 grammar issues in 10 words: 7 * 15 * 100 // 10 = 1050, capped at 0
+    # 7 grammar issues in 10 words: 7 * 3 * 100 // 10 = 210, capped at 0
     issues = [
         GrammarIssue(
             id=str(i),
@@ -146,7 +146,7 @@ def test_compute_scores_low_score_needs_work() -> None:
 
 
 def test_compute_scores_overall_is_min_of_categories() -> None:
-    # 1 spelling issue in 200 words: 1 * 18 * 100 // 200 = 9, score 91
+    # 1 spelling issue in 200 words: 1 * 4 * 100 // 200 = 2, score 98
     issues = [
         GrammarIssue(
             id="0",
@@ -160,38 +160,74 @@ def test_compute_scores_overall_is_min_of_categories() -> None:
         )
     ]
     scores = _compute_scores(issues, word_count=200)
-    assert scores.spelling == 91
+    assert scores.spelling == 98
     assert scores.grammar == 100
-    assert scores.overall == 91  # limited by spelling
+    assert scores.overall == 98  # limited by spelling
     assert scores.overall_label == "Great"
 
 
-def test_compute_scores_label_thresholds() -> None:
-    def issue_count_for_score(target: int, kind: str) -> list[GrammarIssue]:
-        """Return enough issues so that category score lands at target."""
-        penalty = {"grammar": 15, "spelling": 18, "punctuation": 12, "style": 8}[kind]
-        cat = IssueCategory(kind)
-        # n issues in 100 words → score = 100 - n * penalty
-        # choose n such that score ≈ target
-        n = max(0, (100 - target) // penalty)
-        return [
-            GrammarIssue(
-                id=str(i),
-                category=cat,
-                start=i * 5,
-                end=i * 5 + 4,
-                original="word",
-                replacement="fix",
-                short_label="Fix",
-                explanation=".",
-            )
-            for i in range(n)
-        ]
+def _make_grammar_issues(n: int) -> list[GrammarIssue]:
+    return [
+        GrammarIssue(
+            id=str(i),
+            category=IssueCategory.grammar,
+            start=i * 5,
+            end=i * 5 + 4,
+            original="word",
+            replacement="fix",
+            short_label="Fix",
+            explanation=".",
+        )
+        for i in range(n)
+    ]
 
-    # Fair range 50-69: 3 grammar issues in 100 words = 100 - 3*15 = 55
-    issues = issue_count_for_score(55, "grammar")
-    s = _compute_scores(issues, word_count=100)
-    assert s.overall_label in ("Fair", "Good")  # depends on exact n
+
+def test_compute_scores_label_great() -> None:
+    # 5 grammar issues in 100 words: 5 * 3 * 100 // 100 = 15, score 85 → Great
+    scores = _compute_scores(_make_grammar_issues(5), word_count=100)
+    assert scores.grammar == 85
+    assert scores.overall_label == "Great"
+
+
+def test_compute_scores_label_good() -> None:
+    # 10 grammar issues in 100 words: 10 * 3 * 100 // 100 = 30, score 70 → Good
+    scores = _compute_scores(_make_grammar_issues(10), word_count=100)
+    assert scores.grammar == 70
+    assert scores.overall_label == "Good"
+
+
+def test_compute_scores_label_fair() -> None:
+    # 15 grammar issues in 100 words: 15 * 3 * 100 // 100 = 45, score 55 → Fair
+    scores = _compute_scores(_make_grammar_issues(15), word_count=100)
+    assert scores.grammar == 55
+    assert scores.overall_label == "Fair"
+
+
+def test_compute_scores_label_needs_work() -> None:
+    # 20 grammar issues in 100 words: 20 * 3 * 100 // 100 = 60, score 40 → Needs work
+    scores = _compute_scores(_make_grammar_issues(20), word_count=100)
+    assert scores.grammar == 40
+    assert scores.overall_label == "Needs work"
+
+
+def test_compute_scores_realistic_paragraph_grammar() -> None:
+    # 11 grammar issues in 145 words: 11 * 3 * 100 // 145 = 22, score 78
+    scores = _compute_scores(_make_grammar_issues(11), word_count=145)
+    assert scores.grammar == 78
+    assert scores.grammar >= 60
+
+
+def test_compute_scores_zero_issues_all_100() -> None:
+    scores = _compute_scores([], word_count=145)
+    assert scores.grammar == 100
+    assert scores.overall == 100
+
+
+def test_compute_scores_saturated_collapses_to_zero() -> None:
+    # 50 grammar issues in 100 words: 50 * 3 = 150 > 100, clamped to 0
+    scores = _compute_scores(_make_grammar_issues(50), word_count=100)
+    assert scores.grammar == 0
+    assert scores.overall == 0
 
 
 # ---------------------------------------------------------------------------

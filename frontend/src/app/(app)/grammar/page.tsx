@@ -24,7 +24,7 @@ const CATEGORY_STYLE: Record<string, { underline: string; activeBg: string; badg
 // Mirrors the backend _compute_scores formula exactly.
 // score = max(0, 100 - floor(count * penalty * 100 / wordCount))
 // overall = min of all four categories
-const _PENALTY: Record<string, number> = { grammar: 15, spelling: 18, punctuation: 12, style: 8 };
+const _PENALTY: Record<string, number> = { grammar: 3, spelling: 4, punctuation: 2, style: 1 };
 
 function computeScores(
   issues: GrammarIssue[],
