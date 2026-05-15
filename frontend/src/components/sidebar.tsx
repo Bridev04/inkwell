@@ -3,13 +3,14 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, PenLine, FolderOpen, Settings } from 'lucide-react';
+import { LayoutDashboard, PenLine, FolderOpen, SpellCheck, ArrowLeftRight } from 'lucide-react';
 
 const NAV_ITEMS = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard, exact: true },
   { href: '/desk', label: 'Writing Desk', icon: PenLine, exact: false },
+  { href: '/grammar', label: 'Grammar Check', icon: SpellCheck, exact: false },
+  { href: '/paraphrase', label: 'Paraphrase', icon: ArrowLeftRight, exact: false },
   { href: '/documents', label: 'Documents', icon: FolderOpen, exact: false },
-  { href: '/settings', label: 'Settings', icon: Settings, exact: true },
 ] as const;
 
 export function Sidebar() {
@@ -25,7 +26,7 @@ export function Sidebar() {
             alt="Draftwell"
             width={461}
             height={113}
-            className="h-6 w-auto"
+            className="h-8 w-auto"
           />
         </Link>
       </div>
