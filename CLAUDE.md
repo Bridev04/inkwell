@@ -8,7 +8,7 @@ Keep it updated as the project evolves.
 
 **Name:** Draftwell  
 **Purpose:** AI-powered writing assistant. Users submit drafts, receive feedback, rewrites, and tone analysis. Authenticated, with per-user history.  
-**Stage:** Phase 2 — Frontend scaffold (plumbing only; no design)  
+**Stage:** Phase 3 — Grammar checker, paraphraser, Writing Desk redesign  
 
 ## Tech Stack & Decisions
 
@@ -91,12 +91,33 @@ backend/app/
    - [x] `frontend/src/lib/savedDocs.ts` — localStorage wrapper for anonymous saved-document refs
    - [x] Stub routes: `/` (feedback + streaming rewrite), `/documents` (saved list), `/documents/[id]` (fetch)
    - [x] `npm run lint` and `npm run build` pass on the frontend
-   - [x] Design foundation (Prompt 2a): design tokens, brand palette, typography components, restyled primitives (`Button`, `Card`, `Switch`, `Textarea`, `Separator`), `next/font` wiring, brand assets in `public/brand/`
-   - [x] `lib/savedDocs.ts` rewritten with `useSyncExternalStore` (cross-tab sync, internal subscriber set)
-   - [x] `lib/api.ts` GET requests no longer send `Content-Type` header
+   - [x] Design tokens (palette + semantic aliases + radius) wired in globals.css; full shadcn alias surface overridden so brand wins cascade
+   - [x] Typography via next/font: Playfair Display (serif), Inter Tight (sans, default), JetBrains Mono (metadata)
+   - [x] Brand assets committed to frontend/public/brand/ (7 PNGs: wordmark, wordmark-vertical, icon, app-icon, submark-disc, submark-badge, monogram)
+   - [x] Restyled base shadcn primitives: Button, Card, Switch, Textarea, Separator (gold = focus only, never CTA fill)
+   - [x] Typography utilities: DisplayHeading, SectionLabel (real small-caps + uppercase fallback), BodyProse, Mono, Hairline
+   - [x] Retrofit: api.ts GET requests no longer send Content-Type header
+   - [x] Retrofit: savedDocs hook uses useSyncExternalStore for cross-tab and cross-component sync
+   - [x] Home page editorial cover with vertical wordmark hero (no nav)
+   - [x] Site header/footer chrome for non-home pages with active-link state
+   - [x] Cadence-buffered typewriter for streaming rewrites (Playfair, prefers-reduced-motion respected)
+   - [x] Session-scoped draft persistence on the composer
+   - [x] Saved drafts list and detail pages composed with the design system
+   - [x] Component tests (Vitest + RTL) for streaming, persistence, and page rendering
+   - [x] A11y: skip link, aria-live regions, real heading hierarchy, keyboard focus throughout
+   - [x] Grammar checker: `POST /api/v1/grammar` — structured issue list + corrected text (GrammarCheck ORM model + JSONB storage)
+   - [x] Paraphraser: `POST /api/v1/paraphrase` — streamed SSE rewrite with 5 modes (standard, simpler, shorter, academic, creative)
+   - [x] Migration `b2c3d4e5f6a7`: `grammar_checks` and `paraphrases` tables with FK → documents
+   - [x] `DocumentRead` extended to include `grammar_checks` and `paraphrases` arrays
+   - [x] Frontend redesign: 3-column Writing Desk layout (sidebar | editor | right panel)
+   - [x] Sidebar component with logo + nav (Dashboard, Writing Desk, Documents, Settings) + active-link state
+   - [x] `(app)` Next.js route group: `/desk`, `/documents`, `/documents/[id]` all share sidebar layout
+   - [x] Writing Desk page: all 5 tools (Feedback, Rewrite, Grammar, Paraphrase, Tone) in one unified page
+   - [x] Grammar panel in right panel: issue list by type, inline corrected-text toggle
+   - [x] Paraphrase streaming panel with TypewriterStream in right panel
+   - [x] Home page simplified to hero + CTA → `/desk`
 
 ### Up Next
-- [ ] Frontend design (Prompt 2b): page-level redesigns for `/`, `/documents`, `/documents/[id]`
 - [ ] User model + JWT auth
 - [ ] CI/CD with GitHub Actions
 - [ ] Deployment (Railway)

@@ -15,6 +15,8 @@ from sqlalchemy.orm import selectinload
 
 from app.models.document import Document
 from app.models.feedback import Feedback
+from app.models.grammar_check import GrammarCheck
+from app.models.paraphrase import Paraphrase
 from app.models.rewrite import Rewrite
 
 
@@ -55,11 +57,50 @@ async def save_rewrite(
     return doc_id
 
 
+async def save_grammar_check(
+    session: AsyncSession,
+    *,
+    original_text: str,
+    result: dict[str, Any],
+    corrected_text: str,
+) -> uuid.UUID:
+    """Persist a Document and its GrammarCheck in one transaction, return the document id."""
+    doc_id = uuid.uuid4()
+    doc = Document(id=doc_id, original_text=original_text)
+    gc = GrammarCheck(
+        id=uuid.uuid4(),
+        document_id=doc_id,
+        result=result,
+        corrected_text=corrected_text,
+    )
+    session.add(doc)
+    session.add(gc)
+    await session.flush()
+    return doc_id
+
+
+async def save_paraphrase(
+    session: AsyncSession,
+    *,
+    original_text: str,
+    mode: str,
+    output: str,
+) -> uuid.UUID:
+    """Persist a Document and its Paraphrase in one transaction, return the document id."""
+    doc_id = uuid.uuid4()
+    doc = Document(id=doc_id, original_text=original_text)
+    ph = Paraphrase(id=uuid.uuid4(), document_id=doc_id, mode=mode, output=output)
+    session.add(doc)
+    session.add(ph)
+    await session.flush()
+    return doc_id
+
+
 async def get_document(
     session: AsyncSession,
     document_id: uuid.UUID,
 ) -> Document | None:
-    """Fetch a document with feedbacks and rewrites eager-loaded.
+    """Fetch a document with all relations eager-loaded.
 
     Uses selectinload to avoid N+1 queries. Returns None if not found.
     Explicit eager loading is required because the relationships default to lazy="raise".
@@ -70,6 +111,8 @@ async def get_document(
         .options(
             selectinload(Document.feedbacks),
             selectinload(Document.rewrites),
+            selectinload(Document.grammar_checks),
+            selectinload(Document.paraphrases),
         )
     )
     result = await session.execute(stmt)
