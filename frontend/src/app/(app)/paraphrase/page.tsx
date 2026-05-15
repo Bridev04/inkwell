@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -51,11 +51,11 @@ export default function ParaphrasePage() {
   const [error, setError] = useState<string | null>(null);
   const [outputText, setOutputText] = useState('');
   const [savedId, setSavedId] = useState<string | null>(null);
-  const [reducedMotion, setReducedMotion] = useState(false);
-
-  useEffect(() => {
-    setReducedMotion(window.matchMedia('(prefers-reduced-motion: reduce)').matches);
-  }, []);
+  const [reducedMotion] = useState(() =>
+    typeof window !== 'undefined'
+      ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      : false
+  );
 
   async function handleParaphrase() {
     if (!draft.trim() || overLimit) return;

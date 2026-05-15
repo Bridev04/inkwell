@@ -45,11 +45,11 @@ const PARAPHRASE_MODES: { value: ParaphraseMode; label: string }[] = [
   { value: 'creative', label: 'Creative' },
 ];
 
-const QUALITY_COLOR: Record<string, string> = {
-  Excellent: 'text-green-700',
+const SCORE_LABEL_COLOR: Record<string, string> = {
+  Great: 'text-green-700',
   Good: 'text-ink',
   Fair: 'text-amber-700',
-  Poor: 'text-red-700',
+  'Needs work': 'text-red-700',
 };
 
 // ---------------------------------------------------------------------------
@@ -135,8 +135,6 @@ function GrammarPanel({
   result: GrammarResponse;
   savedId?: string | null;
 }) {
-  const [showCorrected, setShowCorrected] = useState(false);
-
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -146,9 +144,9 @@ function GrammarPanel({
       <Hairline variant="gold" />
 
       <div className="flex items-center gap-2">
-        <span className="font-sans text-xs text-stone-500">Quality:</span>
-        <span className={`font-sans text-sm font-medium ${QUALITY_COLOR[result.overall_quality] ?? 'text-ink'}`}>
-          {result.overall_quality}
+        <span className="font-sans text-xs text-stone-500">Overall:</span>
+        <span className={`font-sans text-sm font-medium ${SCORE_LABEL_COLOR[result.scores.overall_label] ?? 'text-ink'}`}>
+          {result.scores.overall_label}
         </span>
         <span className="font-sans text-xs text-stone-500 ml-auto">
           {result.issues.length} issue{result.issues.length !== 1 ? 's' : ''}
@@ -163,14 +161,14 @@ function GrammarPanel({
             <li key={i} className="border border-stone-300 rounded-md p-3 space-y-1">
               <div className="flex items-start gap-2">
                 <span className="font-mono text-[0.625rem] uppercase tracking-wide text-stone-500 mt-0.5 shrink-0">
-                  {issue.type}
+                  {issue.category}
                 </span>
                 <div className="min-w-0">
                   <span className="font-sans text-xs line-through text-stone-500 mr-1">
                     {issue.original}
                   </span>
                   <span className="font-sans text-xs font-medium text-ink">
-                    → {issue.suggestion}
+                    → {issue.replacement}
                   </span>
                 </div>
               </div>
@@ -180,21 +178,6 @@ function GrammarPanel({
             </li>
           ))}
         </ul>
-      )}
-
-      {result.issues.length > 0 && (
-        <button
-          onClick={() => setShowCorrected((v) => !v)}
-          className="font-sans text-xs text-ink underline decoration-stone-300 underline-offset-4 hover:decoration-gold transition-colors"
-        >
-          {showCorrected ? 'Hide corrected text' : 'Show corrected text'}
-        </button>
-      )}
-
-      {showCorrected && (
-        <div className="border border-stone-300 rounded-md p-4 bg-stone-300/10">
-          <BodyProse className="text-sm whitespace-pre-wrap">{result.corrected_text}</BodyProse>
-        </div>
       )}
 
       {savedId && (
