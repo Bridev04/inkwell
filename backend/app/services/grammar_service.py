@@ -27,7 +27,7 @@ from app.services.llm.schemas import TokenUsage
 logger = logging.getLogger(__name__)
 
 # Points deducted per issue per 100 words (scaled to actual word count).
-# Calibrated so that ~10 errors in a 100-word document scores in the 60s–70s
+# Calibrated so that ~10 errors in a 100-word document scores in the 60s-70s
 # and a single error never drops a category below ~95.
 _PENALTY: dict[str, int] = {
     "grammar": 3,

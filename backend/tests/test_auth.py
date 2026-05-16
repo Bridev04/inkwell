@@ -6,8 +6,6 @@ No LLM calls are made in this module.
 
 from __future__ import annotations
 
-import uuid
-
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -150,6 +148,7 @@ async def test_get_me_returns_current_user(
 
 async def test_get_me_without_cookie_returns_401(
     override_db_session: AsyncSession,
+    db_user: User,
 ) -> None:
     # override_db_session wires get_current_user to db_user, but we need to
     # test the real auth flow here, so temporarily remove the override.
@@ -163,8 +162,6 @@ async def test_get_me_without_cookie_returns_401(
         assert response.status_code == 401
     finally:
         # Restore — other tests in the session may depend on override_db_session
-        from app.db.session import get_session
-
         async def _session_gen() -> object:
             yield override_db_session
 
@@ -173,6 +170,7 @@ async def test_get_me_without_cookie_returns_401(
 
 async def test_protected_routes_return_401_without_cookie(
     override_db_session: AsyncSession,
+    db_user: User,
 ) -> None:
     """Writing tool endpoints return 401 when the auth dependency is removed."""
     from app.api.deps import get_current_user
@@ -182,9 +180,7 @@ async def test_protected_routes_return_401_without_cookie(
         transport = ASGITransport(app=app)
         async with AsyncClient(transport=transport, base_url="http://test") as ac:
             r1 = await ac.post("/api/v1/feedback", json={"text": "Hello."})
-            r2 = await ac.post(
-                "/api/v1/rewrites", json={"text": "Hello.", "style": "formal"}
-            )
+            r2 = await ac.post("/api/v1/rewrites", json={"text": "Hello.", "style": "formal"})
             r3 = await ac.post("/api/v1/grammar", json={"text": "Hello."})
         assert r1.status_code == 401
         assert r2.status_code == 401
@@ -198,7 +194,6 @@ async def test_document_ownership_enforced(
     db_user: User,
 ) -> None:
     """GET /documents/{id} returns 404 for a document owned by a different user."""
-    from app.api.deps import get_current_user
     from app.services.persistence import save_feedback
 
     # Create a second user and a document owned by them
