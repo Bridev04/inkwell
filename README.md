@@ -1,91 +1,116 @@
 # Draftwell
 
-> An AI-powered writing assistant that helps users improve their drafts with feedback, rewrites, and tone analysis.
+> An AI-powered writing assistant that helps users improve their drafts with feedback, rewrites, grammar checking, and paraphrasing.
 
 ## Status
 
-🚧 **In active development** — Phase 1: Backend foundation
+🚀 **Full-stack MVP** — authenticated, all writing tools live, CI passing
 
-## Features (Planned)
+## Features
 
-- ✍️ Submit drafts and receive AI-generated feedback (clarity, tone, structure)
-- 🔁 Request rewrites in different styles (formal, casual, persuasive)
-- 📚 Save documents with version history
-- 🔐 User authentication with JWT
-- 📊 Per-user usage tracking and cost monitoring
-- ⚡ Streaming AI responses for low perceived latency
+- **Feedback** — submit a draft and receive structured AI feedback (clarity, tone, structure)
+- **Rewrite** — streamed rewrite in 4 styles (formal, casual, persuasive, concise)
+- **Grammar checker** — inline underlines by category (grammar, spelling, punctuation, style) with per-category scores; Accept/Ignore per issue
+- **Paraphraser** — streamed rewrite in 5 modes (standard, simpler, shorter, academic, creative)
+- **Auth** — register/login with JWT stored in an HttpOnly cookie; all documents are user-scoped
+- **Document history** — saved drafts with embedded feedback, rewrites, grammar checks, and paraphrases
 
 ## Tech Stack
 
 **Backend**
-- Python 3.12 · FastAPI · SQLAlchemy · Alembic · PostgreSQL
-- Anthropic Claude API for LLM inference
-- Pydantic for request/response validation
+- Python 3.12 · FastAPI · SQLAlchemy 2 (async) · Alembic · PostgreSQL 16
+- Anthropic Claude API (`claude-haiku-4-5-20251001`) for LLM inference
+- PyJWT + bcrypt for auth · Pydantic for request/response validation
 
-**Frontend** *(coming soon)*
-- Next.js 15 · TypeScript · Tailwind CSS
+**Frontend**
+- Next.js 16 · React 19 · TypeScript · Tailwind v4 · shadcn (base-ui/react)
+- Playfair Display (serif) · Inter Tight (sans) · JetBrains Mono
+- Vitest + React Testing Library for component tests
 
 **Infrastructure**
-- Docker · GitHub Actions (CI/CD) · Railway (hosting)
+- Docker (local Postgres) · GitHub Actions (CI/CD) · Railway (hosting — coming soon)
 
-## Architecture
+## CI
 
-See [`docs/architecture.md`](docs/architecture.md) for the full system design *(coming soon)*.
+| Workflow | Trigger | Steps |
+|---|---|---|
+| Backend CI | `backend/**` changes | ruff lint → ruff format check → mypy strict → pytest (testcontainers Postgres 16) |
+| Frontend CI | `frontend/**` changes | eslint → next build → vitest run |
 
 ## Local Development
 
 ```bash
-# Clone and enter
 git clone https://github.com/Bridev04/draftwell.git
 cd draftwell
+```
 
-# Backend setup
+### Backend
+
+```bash
 cd backend
 uv sync
-cp ../.env.example .env  # then edit .env with your real keys
+cp ../.env.example .env   # fill in SECRET_KEY and ANTHROPIC_API_KEY
 
 # Start Postgres
 docker compose up -d
 
-# Apply database migrations
+# Apply migrations
 uv run alembic upgrade head
 
 # Run the API server
-uv run uvicorn app.main:app --reload
+uv run uvicorn app.main:app --reload --port 8000
 ```
+
+### Frontend
+
+```bash
+cd frontend
+npm ci
+npm run dev   # http://localhost:3000
+```
+
+The frontend proxies `/api/*` → `http://localhost:8000` via Next.js rewrites, so the backend must be running.
 
 ### Running tests
 
 ```bash
+# Backend (requires Docker for testcontainers)
 cd backend
+uv run pytest -v
 
-# Unit tests (no DB required)
-uv run python -m pytest tests/ --ignore=tests/db -q
-
-# Integration tests (requires Docker)
-uv run python -m pytest tests/db -q
-
-# Full suite
-uv run python -m pytest -q
+# Frontend
+cd frontend
+npx vitest run
 ```
 
 ### Quality gates
 
 ```bash
 cd backend
-uv run python -m ruff check .        # lint
-uv run python -m ruff format --check . # format
-uv run python -m mypy app            # type-check
+uv run ruff check .           # lint
+uv run ruff format --check .  # format
+uv run mypy app               # type-check (strict)
+make ci                       # all three + tests
 ```
 
 ### Wipe and restart the DB
 
 ```bash
 cd backend
-docker compose down -v
-docker compose up -d
-uv run alembic upgrade head
+docker compose down -v && docker compose up -d && uv run alembic upgrade head
 ```
+
+## Environment Variables
+
+Copy `.env.example` → `backend/.env` and set:
+
+| Variable | Description |
+|---|---|
+| `DATABASE_URL` | asyncpg connection string |
+| `DATABASE_URL_SYNC` | psycopg connection string (Alembic) |
+| `SECRET_KEY` | random 32+ char string for JWT signing |
+| `ANTHROPIC_API_KEY` | your Anthropic API key |
+| `CORS_ALLOWED_ORIGINS` | comma-separated frontend origins (default: `http://localhost:3000`) |
 
 ## License
 
@@ -93,4 +118,4 @@ MIT — see [LICENSE](LICENSE)
 
 ## Author
 
-Built by [Brian Ramos](https://github.com/Bridev04) as a portfolio project to demonstrate production AI engineering practices.
+Built by [Brian Ramos](https://github.com/Bridev04) as a portfolio project demonstrating production AI engineering practices.

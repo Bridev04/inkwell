@@ -8,7 +8,7 @@ Keep it updated as the project evolves.
 
 **Name:** Draftwell  
 **Purpose:** AI-powered writing assistant. Users submit drafts, receive feedback, rewrites, and tone analysis. Authenticated, with per-user history.  
-**Stage:** Phase 2 — Frontend scaffold (plumbing only; no design)  
+**Stage:** Phase 3 — Full-stack MVP (auth, all writing tools, CI/CD)  
 
 ## Tech Stack & Decisions
 
@@ -18,7 +18,7 @@ Keep it updated as the project evolves.
 - **Database:** PostgreSQL + SQLAlchemy 2.x (async) + Alembic migrations
 - **LLM provider:** Anthropic Claude (provider-abstracted in `app/services/llm/`)
 - **Default model:** `claude-haiku-4-5-20251001` (cheapest viable; configurable via env)
-- **Auth:** JWT (planned, week 2)
+- **Auth:** JWT via HttpOnly cookie (HS256, PyJWT + bcrypt)
 - **Tests:** pytest + httpx for async API testing
 - **Linting:** ruff (lint + format) + mypy (types)
 
@@ -135,9 +135,9 @@ backend/app/
    - [x] Frontend: Next.js rewrites proxy `/api/*` → backend so cookies land on the frontend origin
    - [x] Frontend: `src/middleware.ts` — cookie-presence check redirects unauthenticated users to `/login`
    - [x] Frontend: Sidebar shows user email + Sign out button; logout clears sessionStorage (draft wipe on user switch)
+   - [x] CI/CD: GitHub Actions — `backend-ci.yml` (ruff lint/format + mypy strict + pytest via testcontainers) and `frontend-ci.yml` (eslint + next build + vitest run); both path-filtered to `backend/**` and `frontend/**`
 
 ### Up Next
-- [ ] CI/CD with GitHub Actions
 - [ ] Deployment (Railway)
 
 
