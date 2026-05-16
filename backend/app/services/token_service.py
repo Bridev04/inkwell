@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import jwt
 from fastapi import HTTPException
@@ -13,7 +13,7 @@ from app.config import Settings
 
 def create_access_token(user_id: uuid.UUID, settings: Settings) -> str:
     """Encode a signed JWT with the user id as subject."""
-    expires_at = datetime.now(timezone.utc) + timedelta(minutes=settings.jwt_expiry_minutes)
+    expires_at = datetime.now(UTC) + timedelta(minutes=settings.jwt_expiry_minutes)
     payload: dict[str, object] = {"sub": str(user_id), "exp": expires_at}
     return jwt.encode(
         payload,
