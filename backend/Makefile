@@ -20,4 +20,4 @@ check: lint typecheck test
 run:
 	uv run uvicorn app.main:app --reload --port 8000
 
-ci: lint typecheck test
+ci: lint format typecheck test
