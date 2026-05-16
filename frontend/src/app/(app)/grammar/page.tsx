@@ -7,7 +7,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { SectionLabel, Mono } from '@/components/typography';
 import { submitGrammar, type GrammarResponse, type GrammarIssue, type GrammarScores } from '@/lib/api';
-import { addSavedDoc } from '@/lib/savedDocs';
 import { useDraftPersistence } from '@/lib/useDraftPersistence';
 
 // ---------------------------------------------------------------------------
@@ -356,7 +355,6 @@ export default function GrammarPage() {
       setIsReviewing(true);
       if (save && resp.document_id) {
         setSavedId(resp.document_id);
-        addSavedDoc({ id: resp.document_id, createdAt: new Date().toISOString(), snippet: textToCheck.slice(0, 80) });
         clearDraft();
       }
     } catch (e) {

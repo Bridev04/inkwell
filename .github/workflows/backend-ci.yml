@@ -36,7 +36,7 @@ jobs:
       - name: Tests
         run: uv run pytest -v
         env:
-          SECRET_KEY: ci-test-secret-only
+          JWT_SECRET_KEY: ci-test-secret-only
           DATABASE_URL: postgresql+asyncpg://dummy:dummy@localhost/dummy
           DATABASE_URL_SYNC: postgresql+psycopg://dummy:dummy@localhost/dummy
           ANTHROPIC_API_KEY: dummy

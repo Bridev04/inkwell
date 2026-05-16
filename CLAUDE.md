@@ -136,6 +136,7 @@ backend/app/
    - [x] Frontend: `src/middleware.ts` — cookie-presence check redirects unauthenticated users to `/login`
    - [x] Frontend: Sidebar shows user email + Sign out button; logout clears sessionStorage (draft wipe on user switch)
    - [x] CI/CD: GitHub Actions — `backend-ci.yml` (ruff lint/format + mypy strict + pytest via testcontainers) and `frontend-ci.yml` (eslint + next build + vitest run); both path-filtered to `backend/**` and `frontend/**`
+   - [x] Pre-deploy hardening: rate limiting (slowapi), `GET /api/v1/documents` list endpoint, CORS restricted, `debug=False` default, env var docs corrected, `proxy.ts` migration (Next.js 16), localStorage replaced by API on documents page
 
 ### Up Next
 - [ ] Deployment (Railway)

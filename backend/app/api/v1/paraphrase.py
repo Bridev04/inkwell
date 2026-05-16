@@ -5,11 +5,12 @@ from __future__ import annotations
 from collections.abc import AsyncGenerator
 
 import anthropic
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user, get_llm_client
+from app.core.limiter import limiter
 from app.db.session import get_session
 from app.models.user import User
 from app.schemas.paraphrase import ParaphraseRequest
@@ -25,7 +26,9 @@ _STREAM_HEADERS = {
 
 
 @router.post("/paraphrase")
+@limiter.limit("20/hour")
 async def create_paraphrase(
+    request: Request,
     req: ParaphraseRequest,
     user: User = Depends(get_current_user),  # noqa: B008
     llm: LLMClient = Depends(get_llm_client),  # noqa: B008

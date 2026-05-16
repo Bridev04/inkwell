@@ -20,7 +20,6 @@ import {
   type RewriteDocumentEvent,
   type ParaphraseDocumentEvent,
 } from '@/lib/api';
-import { addSavedDoc } from '@/lib/savedDocs';
 import { useDraftPersistence } from '@/lib/useDraftPersistence';
 
 // ---------------------------------------------------------------------------
@@ -333,7 +332,6 @@ export default function DeskPage() {
       setFeedbackResult(resp);
       if (save && resp.document_id) {
         setFeedbackDocId(resp.document_id);
-        addSavedDoc({ id: resp.document_id, createdAt: new Date().toISOString(), snippet: draft.slice(0, 80) });
         clearDraft();
       }
     } catch (e) {
@@ -353,7 +351,6 @@ export default function DeskPage() {
       setFeedbackResult(resp);
       if (save && resp.document_id) {
         setFeedbackDocId(resp.document_id);
-        addSavedDoc({ id: resp.document_id, createdAt: new Date().toISOString(), snippet: draft.slice(0, 80) });
       }
     } catch (e) {
       setError(errorMsg(e));
@@ -378,7 +375,6 @@ export default function DeskPage() {
           onDocument: (evt: RewriteDocumentEvent) => {
             setRewriteDocId(evt.document_id);
             if (save) {
-              addSavedDoc({ id: evt.document_id, createdAt: new Date().toISOString(), snippet: draft.slice(0, 80) });
               clearDraft();
             }
           },
@@ -402,7 +398,6 @@ export default function DeskPage() {
       setGrammarResult(resp);
       if (save && resp.document_id) {
         setGrammarDocId(resp.document_id);
-        addSavedDoc({ id: resp.document_id, createdAt: new Date().toISOString(), snippet: draft.slice(0, 80) });
         clearDraft();
       }
     } catch (e) {
@@ -428,7 +423,6 @@ export default function DeskPage() {
           onDocument: (evt: ParaphraseDocumentEvent) => {
             setParaphraseDocId(evt.document_id);
             if (save) {
-              addSavedDoc({ id: evt.document_id, createdAt: new Date().toISOString(), snippet: draft.slice(0, 80) });
               clearDraft();
             }
           },

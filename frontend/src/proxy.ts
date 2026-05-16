@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 const APP_PREFIXES = ['/desk', '/documents', '/grammar', '/paraphrase'];
 const AUTH_PATHS = ['/login', '/register'];
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const token = request.cookies.get('access_token');
   const path = request.nextUrl.pathname;
 

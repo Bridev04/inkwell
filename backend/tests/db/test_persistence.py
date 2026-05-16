@@ -19,7 +19,12 @@ from app.schemas.feedback import DimensionFeedback, FeedbackResponse, FocusDimen
 from app.services.feedback_service import _LLMFeedbackPayload
 from app.services.llm.fakes import FakeLLMClient
 from app.services.llm.schemas import StreamChunk, TokenUsage
-from app.services.persistence import get_document, save_feedback, save_rewrite
+from app.services.persistence import (
+    get_document,
+    get_documents_by_user,
+    save_feedback,
+    save_rewrite,
+)
 
 # ---------------------------------------------------------------------------
 # Smoke: service layer round-trip
@@ -252,3 +257,77 @@ async def test_get_document_endpoint_rejects_malformed_id(
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         response = await ac.get(f"/api/v1/documents/{bad_id}")
     assert response.status_code == 422
+
+
+# ---------------------------------------------------------------------------
+# GET /documents (list) endpoint
+# ---------------------------------------------------------------------------
+
+
+async def test_list_documents_returns_user_documents(
+    override_db_session: AsyncSession,
+    db_user: User,
+) -> None:
+    """GET /documents returns all documents for the authenticated user."""
+    await save_feedback(
+        override_db_session,
+        original_text="First doc.",
+        result={"overall_summary": "A"},
+        user_id=db_user.id,
+    )
+    await save_feedback(
+        override_db_session,
+        original_text="Second doc.",
+        result={"overall_summary": "B"},
+        user_id=db_user.id,
+    )
+    await override_db_session.flush()
+
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        response = await ac.get("/api/v1/documents")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) == 2
+    texts = {d["original_text"] for d in data}
+    assert texts == {"First doc.", "Second doc."}
+
+
+async def test_list_documents_empty_for_new_user(
+    override_db_session: AsyncSession,
+) -> None:
+    """GET /documents returns an empty list when the user has no saved documents."""
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        response = await ac.get("/api/v1/documents")
+
+    assert response.status_code == 200
+    assert response.json() == []
+
+
+async def test_list_documents_service_scopes_by_user(
+    db_session: AsyncSession,
+    db_user: User,
+) -> None:
+    """get_documents_by_user only returns documents owned by the given user."""
+    from app.services.auth_service import create_user
+
+    other_user = await create_user(db_session, email="other2@example.com", password="otherpass1")
+    await save_feedback(
+        db_session,
+        original_text="Owner's doc.",
+        result={"overall_summary": "owner"},
+        user_id=db_user.id,
+    )
+    await save_feedback(
+        db_session,
+        original_text="Other's doc.",
+        result={"overall_summary": "other"},
+        user_id=other_user.id,
+    )
+    await db_session.flush()
+
+    docs = await get_documents_by_user(db_session, db_user.id)
+    assert len(docs) == 1
+    assert docs[0].original_text == "Owner's doc."

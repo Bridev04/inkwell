@@ -100,6 +100,26 @@ async def save_paraphrase(
     return doc_id
 
 
+async def get_documents_by_user(
+    session: AsyncSession,
+    user_id: uuid.UUID,
+) -> list[Document]:
+    """Fetch all documents for a user, newest first, with relations eager-loaded."""
+    stmt = (
+        select(Document)
+        .where(Document.user_id == user_id)
+        .order_by(Document.created_at.desc())
+        .options(
+            selectinload(Document.feedbacks),
+            selectinload(Document.rewrites),
+            selectinload(Document.grammar_checks),
+            selectinload(Document.paraphrases),
+        )
+    )
+    result = await session.execute(stmt)
+    return list(result.scalars().all())
+
+
 async def get_document(
     session: AsyncSession,
     document_id: uuid.UUID,

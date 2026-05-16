@@ -21,7 +21,7 @@ class Settings(BaseSettings):
     # App
     app_name: str = "Draftwell"
     environment: str = Field(default="development")
-    debug: bool = Field(default=True)
+    debug: bool = Field(default=False)
 
     # LLM
     anthropic_api_key: SecretStr
@@ -29,7 +29,6 @@ class Settings(BaseSettings):
     llm_max_tokens: int = Field(default=1024)
 
     # Feedback endpoint
-    anthropic_model: str = Field(default="claude-haiku-4-5-20251001")
     feedback_max_text_chars: int = Field(default=10_000)
 
     # Rewrites endpoint

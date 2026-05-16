@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, Response
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user
 from app.config import Settings, get_settings
+from app.core.limiter import limiter
 from app.db.session import get_session
 from app.models.user import User
 from app.schemas.users import UserCreate, UserLogin, UserRead
@@ -28,7 +29,9 @@ def _set_auth_cookie(response: Response, token: str, settings: Settings) -> None
 
 
 @router.post("/auth/register", response_model=UserRead, status_code=201)
+@limiter.limit("10/minute")
 async def register(
+    request: Request,
     body: UserCreate,
     response: Response,
     session: AsyncSession = Depends(get_session),  # noqa: B008
@@ -42,7 +45,9 @@ async def register(
 
 
 @router.post("/auth/login", response_model=UserRead)
+@limiter.limit("20/minute")
 async def login(
+    request: Request,
     body: UserLogin,
     response: Response,
     session: AsyncSession = Depends(get_session),  # noqa: B008

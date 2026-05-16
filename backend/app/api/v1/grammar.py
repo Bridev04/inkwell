@@ -5,11 +5,12 @@ from __future__ import annotations
 import logging
 
 import anthropic
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user, get_llm_client
+from app.core.limiter import limiter
 from app.db.session import get_session
 from app.models.user import User
 from app.schemas.grammar import GrammarRequest, GrammarResponse
@@ -23,7 +24,9 @@ router = APIRouter(tags=["grammar"])
 
 
 @router.post("/grammar", response_model=GrammarResponse)
+@limiter.limit("30/hour")
 async def create_grammar_check(
+    request: Request,
     req: GrammarRequest,
     user: User = Depends(get_current_user),  # noqa: B008
     llm: LLMClient = Depends(get_llm_client),  # noqa: B008

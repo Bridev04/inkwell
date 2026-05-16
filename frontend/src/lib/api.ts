@@ -281,6 +281,14 @@ export async function streamParaphrase(
   });
 }
 
+export async function listDocuments(): Promise<DocumentRead[]> {
+  const res = await fetch(`${baseUrl()}/api/v1/documents`, {
+    credentials: 'include',
+  });
+  await throwIfNotOk(res);
+  return res.json() as Promise<DocumentRead[]>;
+}
+
 export async function getDocument(id: string): Promise<DocumentRead> {
   const res = await fetch(`${baseUrl()}/api/v1/documents/${id}`, {
     credentials: 'include',

@@ -9,7 +9,7 @@
 ## Features
 
 - **Feedback** — submit a draft and receive structured AI feedback (clarity, tone, structure)
-- **Rewrite** — streamed rewrite in 4 styles (formal, casual, persuasive, concise)
+- **Rewrite** — streamed rewrite in 5 styles (formal, casual, persuasive, concise, vivid)
 - **Grammar checker** — inline underlines by category (grammar, spelling, punctuation, style) with per-category scores; Accept/Ignore per issue
 - **Paraphraser** — streamed rewrite in 5 modes (standard, simpler, shorter, academic, creative)
 - **Auth** — register/login with JWT stored in an HttpOnly cookie; all documents are user-scoped
@@ -49,7 +49,7 @@ cd draftwell
 ```bash
 cd backend
 uv sync
-cp ../.env.example .env   # fill in SECRET_KEY and ANTHROPIC_API_KEY
+cp ../.env.example .env   # fill in JWT_SECRET_KEY and ANTHROPIC_API_KEY
 
 # Start Postgres
 docker compose up -d
@@ -106,10 +106,11 @@ Copy `.env.example` → `backend/.env` and set:
 
 | Variable | Description |
 |---|---|
+| `ANTHROPIC_API_KEY` | your Anthropic API key |
 | `DATABASE_URL` | asyncpg connection string |
 | `DATABASE_URL_SYNC` | psycopg connection string (Alembic) |
-| `SECRET_KEY` | random 32+ char string for JWT signing |
-| `ANTHROPIC_API_KEY` | your Anthropic API key |
+| `JWT_SECRET_KEY` | random 32+ char string for JWT signing (`python -c "import secrets; print(secrets.token_hex(32))"`) |
+| `ENVIRONMENT` | `development` (default) or `production` — controls debug mode and cookie `Secure` flag |
 | `CORS_ALLOWED_ORIGINS` | comma-separated frontend origins (default: `http://localhost:3000`) |
 
 ## License

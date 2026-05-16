@@ -13,7 +13,6 @@ import {
   type ParaphraseMode,
   type ParaphraseDocumentEvent,
 } from '@/lib/api';
-import { addSavedDoc } from '@/lib/savedDocs';
 import { useDraftPersistence } from '@/lib/useDraftPersistence';
 
 const WORD_LIMIT = 150;
@@ -83,7 +82,6 @@ export default function ParaphrasePage() {
           onDocument: (evt: ParaphraseDocumentEvent) => {
             setSavedId(evt.document_id);
             if (save) {
-              addSavedDoc({ id: evt.document_id, createdAt: new Date().toISOString(), snippet: draft.slice(0, 80) });
               clearDraft();
             }
           },
