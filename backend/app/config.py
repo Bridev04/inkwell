@@ -54,6 +54,11 @@ class Settings(BaseSettings):
             return [origin.strip() for origin in v.split(",")]
         return v
 
+    # Auth / JWT
+    jwt_secret_key: SecretStr = Field(default=SecretStr("changeme-for-dev-only"))
+    jwt_algorithm: str = Field(default="HS256")
+    jwt_expiry_minutes: int = Field(default=1440)  # 24 hours
+
     # Database
     # Two URLs for the same Postgres instance: the app uses the async asyncpg driver;
     # Alembic uses the sync psycopg v3 driver. Both point at the same database.

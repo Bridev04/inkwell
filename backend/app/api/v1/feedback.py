@@ -9,8 +9,9 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import get_llm_client
+from app.api.deps import get_current_user, get_llm_client
 from app.db.session import get_session
+from app.models.user import User
 from app.schemas.feedback import FeedbackRequest, FeedbackResponse
 from app.services.feedback_service import generate_feedback
 from app.services.llm.base import LLMClient
@@ -24,6 +25,7 @@ router = APIRouter(tags=["feedback"])
 @router.post("/feedback", response_model=FeedbackResponse)
 async def create_feedback(
     req: FeedbackRequest,
+    user: User = Depends(get_current_user),  # noqa: B008
     llm: LLMClient = Depends(get_llm_client),  # noqa: B008
     session: AsyncSession = Depends(get_session),  # noqa: B008
 ) -> FeedbackResponse:
@@ -46,6 +48,7 @@ async def create_feedback(
                 original_text=req.text,
                 # Exclude document_id from the stored payload to avoid circular redundancy.
                 result=response.model_dump(mode="json", exclude={"document_id"}),
+                user_id=user.id,
             )
             response = response.model_copy(update={"document_id": doc_id})
         except Exception:

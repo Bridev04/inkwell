@@ -1,9 +1,12 @@
 'use client';
 
-import Link from 'next/link';
 import Image from 'next/image';
-import { usePathname } from 'next/navigation';
-import { LayoutDashboard, PenLine, FolderOpen, SpellCheck, ArrowLeftRight } from 'lucide-react';
+import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { LayoutDashboard, PenLine, FolderOpen, SpellCheck, ArrowLeftRight, LogOut } from 'lucide-react';
+
+import { getMe, logout, type UserRead } from '@/lib/auth';
 
 const NAV_ITEMS = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard, exact: true },
@@ -15,6 +18,18 @@ const NAV_ITEMS = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+  const [user, setUser] = useState<UserRead | null>(null);
+
+  useEffect(() => {
+    getMe().then(setUser).catch(() => null);
+  }, []);
+
+  async function handleLogout() {
+    await logout();
+    sessionStorage.clear();
+    router.push('/login');
+  }
 
   return (
     <aside className="w-56 min-h-screen bg-cream border-r border-stone-300 flex flex-col shrink-0">
@@ -56,6 +71,25 @@ export function Sidebar() {
           );
         })}
       </nav>
+
+      {/* User + sign out */}
+      {user && (
+        <div className="px-4 py-3 border-t border-stone-300 space-y-2">
+          <p
+            className="font-mono text-[0.65rem] text-stone-500 truncate"
+            title={user.email}
+          >
+            {user.email}
+          </p>
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-2 font-sans text-xs text-stone-400 hover:text-red-600 transition-colors"
+          >
+            <LogOut size={12} aria-hidden />
+            Sign out
+          </button>
+        </div>
+      )}
 
       {/* Brand tagline */}
       <div className="px-5 py-4 border-t border-stone-300">

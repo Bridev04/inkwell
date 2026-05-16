@@ -14,6 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_llm_client
 from app.main import app
+from app.models.user import User
 from app.schemas.feedback import DimensionFeedback, FeedbackResponse, FocusDimension
 from app.services.feedback_service import _LLMFeedbackPayload
 from app.services.llm.fakes import FakeLLMClient
@@ -25,10 +26,12 @@ from app.services.persistence import get_document, save_feedback, save_rewrite
 # ---------------------------------------------------------------------------
 
 
-async def test_save_and_fetch_feedback(db_session: AsyncSession) -> None:
+async def test_save_and_fetch_feedback(db_session: AsyncSession, db_user: User) -> None:
     """Save a document+feedback and verify all fields round-trip correctly."""
     result = {"overall_summary": "Good draft", "dimensions": [], "suggested_rewrites": []}
-    doc_id = await save_feedback(db_session, original_text="My essay.", result=result)
+    doc_id = await save_feedback(
+        db_session, original_text="My essay.", result=result, user_id=db_user.id
+    )
 
     doc = await get_document(db_session, doc_id)
     assert doc is not None
@@ -38,10 +41,14 @@ async def test_save_and_fetch_feedback(db_session: AsyncSession) -> None:
     assert doc.rewrites == []
 
 
-async def test_save_and_fetch_rewrite(db_session: AsyncSession) -> None:
+async def test_save_and_fetch_rewrite(db_session: AsyncSession, db_user: User) -> None:
     """Save a document+rewrite and verify all fields round-trip correctly."""
     doc_id = await save_rewrite(
-        db_session, original_text="Hello world.", style="formal", output="Greetings, globe."
+        db_session,
+        original_text="Hello world.",
+        style="formal",
+        output="Greetings, globe.",
+        user_id=db_user.id,
     )
 
     doc = await get_document(db_session, doc_id)
@@ -206,11 +213,13 @@ async def test_rewrites_save_true_emits_document_event(
 
 async def test_get_document_endpoint_returns_embedded_relations(
     override_db_session: AsyncSession,
+    db_user: User,
 ) -> None:
     doc_id = await save_feedback(
         override_db_session,
         original_text="Endpoint test.",
         result={"overall_summary": "Test"},
+        user_id=db_user.id,
     )
     await override_db_session.flush()
 

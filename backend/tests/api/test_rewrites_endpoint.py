@@ -40,7 +40,7 @@ async def _client_with(fake: FakeLLMClient) -> AsyncIterator[AsyncClient]:
         async with AsyncClient(transport=transport, base_url="http://test") as ac:
             yield ac
     finally:
-        app.dependency_overrides.clear()
+        app.dependency_overrides.pop(get_llm_client, None)
 
 
 def _parse_events(text: str) -> list[dict[str, str]]:

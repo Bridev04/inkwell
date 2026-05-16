@@ -189,6 +189,10 @@ export interface DocumentRead {
 // ---------------------------------------------------------------------------
 
 function baseUrl(): string {
+  // In the browser, all /api/* requests are proxied by Next.js to the backend,
+  // so relative paths work regardless of environment.
+  // In server contexts (if ever called SSR), fall back to the full URL.
+  if (typeof window !== 'undefined') return '';
   return process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000';
 }
 
@@ -209,6 +213,7 @@ export async function submitFeedback(
   const res = await fetch(`${baseUrl()}/api/v1/feedback`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
     body: JSON.stringify(req),
   });
   await throwIfNotOk(res);
@@ -227,6 +232,7 @@ export async function streamRewrite(
   const res = await fetch(`${baseUrl()}/api/v1/rewrites`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
     body: JSON.stringify(req),
   });
   await throwIfNotOk(res);
@@ -244,6 +250,7 @@ export async function submitGrammar(
   const res = await fetch(`${baseUrl()}/api/v1/grammar`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
     body: JSON.stringify(req),
   });
   await throwIfNotOk(res);
@@ -262,6 +269,7 @@ export async function streamParaphrase(
   const res = await fetch(`${baseUrl()}/api/v1/paraphrase`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
     body: JSON.stringify(req),
   });
   await throwIfNotOk(res);
@@ -274,7 +282,9 @@ export async function streamParaphrase(
 }
 
 export async function getDocument(id: string): Promise<DocumentRead> {
-  const res = await fetch(`${baseUrl()}/api/v1/documents/${id}`);
+  const res = await fetch(`${baseUrl()}/api/v1/documents/${id}`, {
+    credentials: 'include',
+  });
   await throwIfNotOk(res);
   return res.json() as Promise<DocumentRead>;
 }

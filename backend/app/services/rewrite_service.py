@@ -54,6 +54,7 @@ async def stream_rewrite(
     req: RewriteRequest,
     llm: LLMClient,
     session: AsyncSession | None = None,
+    user_id: UUID | None = None,
 ) -> AsyncGenerator[str, None]:
     """Yield fully-formatted SSE event strings for a single rewrite request.
 
@@ -137,7 +138,7 @@ async def stream_rewrite(
         )
 
     # Phase 2: persist only if the stream succeeded and saving was requested.
-    if stream_failed or not req.save or session is None:
+    if stream_failed or not req.save or session is None or user_id is None:
         return
 
     try:
@@ -146,6 +147,7 @@ async def stream_rewrite(
             original_text=req.text,
             style=req.style.value,
             output="".join(output_chunks),
+            user_id=user_id,
         )
         yield format_sse("document", DocumentEvent(document_id=doc_id))
     except Exception as exc:

@@ -6,7 +6,7 @@ import uuid
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import DateTime, Text, text
+from sqlalchemy import DateTime, ForeignKey, Text, text
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -17,6 +17,7 @@ if TYPE_CHECKING:
     from app.models.grammar_check import GrammarCheck
     from app.models.paraphrase import Paraphrase
     from app.models.rewrite import Rewrite
+    from app.models.user import User
 
 
 class Document(Base):
@@ -25,10 +26,18 @@ class Document(Base):
     id: Mapped[uuid.UUID] = mapped_column(
         PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4
     )
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
     original_text: Mapped[str] = mapped_column(Text, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=text("now()"), nullable=False
     )
+
+    user: Mapped[User] = relationship("User", back_populates="documents", lazy="raise")
 
     # lazy="raise" forces callers to use explicit selectinload — prevents N+1 accidents.
     feedbacks: Mapped[list[Feedback]] = relationship(

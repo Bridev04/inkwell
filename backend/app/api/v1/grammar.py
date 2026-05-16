@@ -9,8 +9,9 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import get_llm_client
+from app.api.deps import get_current_user, get_llm_client
 from app.db.session import get_session
+from app.models.user import User
 from app.schemas.grammar import GrammarRequest, GrammarResponse
 from app.services.grammar_service import check_grammar
 from app.services.llm.base import LLMClient
@@ -24,6 +25,7 @@ router = APIRouter(tags=["grammar"])
 @router.post("/grammar", response_model=GrammarResponse)
 async def create_grammar_check(
     req: GrammarRequest,
+    user: User = Depends(get_current_user),  # noqa: B008
     llm: LLMClient = Depends(get_llm_client),  # noqa: B008
     session: AsyncSession = Depends(get_session),  # noqa: B008
 ) -> GrammarResponse:
@@ -46,6 +48,7 @@ async def create_grammar_check(
                 original_text=req.text,
                 result=response.model_dump(mode="json", exclude={"document_id"}),
                 corrected_text="",
+                user_id=user.id,
             )
             response = response.model_copy(update={"document_id": doc_id})
         except Exception:

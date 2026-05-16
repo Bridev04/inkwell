@@ -25,6 +25,7 @@ async def save_feedback(
     *,
     original_text: str,
     result: dict[str, Any],
+    user_id: uuid.UUID,
 ) -> uuid.UUID:
     """Persist a Document and its Feedback in one transaction, return the document id.
 
@@ -32,7 +33,7 @@ async def save_feedback(
     return it in the response before the session commits.
     """
     doc_id = uuid.uuid4()
-    doc = Document(id=doc_id, original_text=original_text)
+    doc = Document(id=doc_id, original_text=original_text, user_id=user_id)
     fb = Feedback(id=uuid.uuid4(), document_id=doc_id, result=result)
     session.add(doc)
     session.add(fb)
@@ -46,10 +47,11 @@ async def save_rewrite(
     original_text: str,
     style: str,
     output: str,
+    user_id: uuid.UUID,
 ) -> uuid.UUID:
     """Persist a Document and its Rewrite in one transaction, return the document id."""
     doc_id = uuid.uuid4()
-    doc = Document(id=doc_id, original_text=original_text)
+    doc = Document(id=doc_id, original_text=original_text, user_id=user_id)
     rw = Rewrite(id=uuid.uuid4(), document_id=doc_id, style=style, output=output)
     session.add(doc)
     session.add(rw)
@@ -63,10 +65,11 @@ async def save_grammar_check(
     original_text: str,
     result: dict[str, Any],
     corrected_text: str,
+    user_id: uuid.UUID,
 ) -> uuid.UUID:
     """Persist a Document and its GrammarCheck in one transaction, return the document id."""
     doc_id = uuid.uuid4()
-    doc = Document(id=doc_id, original_text=original_text)
+    doc = Document(id=doc_id, original_text=original_text, user_id=user_id)
     gc = GrammarCheck(
         id=uuid.uuid4(),
         document_id=doc_id,
@@ -85,10 +88,11 @@ async def save_paraphrase(
     original_text: str,
     mode: str,
     output: str,
+    user_id: uuid.UUID,
 ) -> uuid.UUID:
     """Persist a Document and its Paraphrase in one transaction, return the document id."""
     doc_id = uuid.uuid4()
-    doc = Document(id=doc_id, original_text=original_text)
+    doc = Document(id=doc_id, original_text=original_text, user_id=user_id)
     ph = Paraphrase(id=uuid.uuid4(), document_id=doc_id, mode=mode, output=output)
     session.add(doc)
     session.add(ph)

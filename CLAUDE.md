@@ -8,7 +8,7 @@ Keep it updated as the project evolves.
 
 **Name:** Draftwell  
 **Purpose:** AI-powered writing assistant. Users submit drafts, receive feedback, rewrites, and tone analysis. Authenticated, with per-user history.  
-**Stage:** Phase 3 — Grammar checker, paraphraser, Writing Desk redesign  
+**Stage:** Phase 2 — Frontend scaffold (plumbing only; no design)  
 
 ## Tech Stack & Decisions
 
@@ -123,11 +123,23 @@ backend/app/
    - [x] Grammar checker UX: manual-only checks (no debounce auto-trigger on paste/edit); `isReviewing` + `isChecking` state model so "Check again" re-checks in-place without clearing the panel; "Edit" button returns to textarea with accepted-fixes text while keeping panel results visible
    - [x] Frontend UI polish: Writing Desk right panel width consistent with Grammar/Paraphrase pages; split-button controls pair Rewrite/Paraphrase inline with their mode selectors; copy-to-clipboard on all streaming result panels; empty right-panel placeholder state; double hairline bug fixed in desk GrammarPanel
    - [x] Grammar checker bug fix: `generate_structured` accepts `max_tokens` override; grammar service passes `max_tokens=4096` — fixes silent empty-result bug on texts with many issues where 1024-token default caused Haiku to return `{"issues": []}`
+   - [x] User model + JWT auth (HttpOnly cookie, HS256)
+   - [x] `User` ORM model: id (UUID), email (unique + indexed), hashed_password (bcrypt), is_active, created_at
+   - [x] `documents.user_id` FK (NOT NULL, CASCADE DELETE) — all documents are user-scoped
+   - [x] `POST /api/v1/auth/register`, `POST /api/v1/auth/login`, `POST /api/v1/auth/logout`, `GET /api/v1/auth/me`
+   - [x] `get_current_user` FastAPI dependency reads `access_token` HttpOnly cookie; 401 if missing/invalid
+   - [x] All writing tool routes require auth; `GET /documents/{id}` enforces ownership (404 if not owner)
+   - [x] Migration `c3d4e5f6a7b8`: `users` table + `user_id` FK on `documents`
+   - [x] PyJWT + bcrypt (direct, passlib removed — incompatible with bcrypt 4+)
+   - [x] Frontend: `credentials: 'include'` on all fetch calls; `src/lib/auth.ts`; `/login` + `/register` pages
+   - [x] Frontend: Next.js rewrites proxy `/api/*` → backend so cookies land on the frontend origin
+   - [x] Frontend: `src/middleware.ts` — cookie-presence check redirects unauthenticated users to `/login`
+   - [x] Frontend: Sidebar shows user email + Sign out button; logout clears sessionStorage (draft wipe on user switch)
 
 ### Up Next
-- [ ] User model + JWT auth
 - [ ] CI/CD with GitHub Actions
 - [ ] Deployment (Railway)
+
 
 ## Local DB Setup
 

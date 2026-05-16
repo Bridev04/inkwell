@@ -6,8 +6,9 @@ Architecture:
   db_session          (function-scoped, async) — per-test AsyncSession backed by a
                                                  transaction that is rolled back after
                                                  each test for isolation
-  override_db_session (function-scoped, async) — same session wired into the FastAPI
-                                                 dependency graph for endpoint tests
+  db_user             (function-scoped, async) — a real User row in db_session
+  override_db_session (function-scoped, async) — db_session + db_user wired into the
+                                                 FastAPI dependency graph for endpoint tests
 """
 
 from __future__ import annotations
@@ -21,8 +22,10 @@ from alembic.config import Config
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 
 from alembic import command
+from app.api.deps import get_current_user
 from app.db.session import get_session
 from app.main import app
+from app.models.user import User
 
 _BACKEND_DIR = pathlib.Path(__file__).parent.parent
 
@@ -120,21 +123,32 @@ async def db_session(
 
 
 @pytest_asyncio.fixture(loop_scope="function")
+async def db_user(db_session: AsyncSession) -> User:
+    """A real User row in db_session, usable as FK owner for documents."""
+    from app.services.auth_service import create_user
+
+    return await create_user(db_session, email="test@example.com", password="testpass123!")
+
+
+@pytest_asyncio.fixture(loop_scope="function")
 async def override_db_session(
     db_session: AsyncSession,
+    db_user: User,
 ) -> AsyncGenerator[AsyncSession, None]:
-    """Wire ``db_session`` into the FastAPI dependency graph and yield it.
+    """Wire ``db_session`` and ``db_user`` into the FastAPI dependency graph.
 
     Use this fixture in endpoint tests that need real DB access so that
     the in-process test client hits the same rolled-back session as the
     direct service-layer assertions.
     """
 
-    async def _override() -> AsyncGenerator[AsyncSession, None]:
+    async def _override_session() -> AsyncGenerator[AsyncSession, None]:
         yield db_session
 
-    app.dependency_overrides[get_session] = _override
+    app.dependency_overrides[get_session] = _override_session
+    app.dependency_overrides[get_current_user] = lambda: db_user
     try:
         yield db_session
     finally:
         app.dependency_overrides.pop(get_session, None)
+        app.dependency_overrides.pop(get_current_user, None)

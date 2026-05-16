@@ -42,7 +42,7 @@ async def _client_with(fake: FakeLLMClient) -> AsyncIterator[AsyncClient]:
         async with AsyncClient(transport=transport, base_url="http://test") as ac:
             yield ac
     finally:
-        app.dependency_overrides.clear()
+        app.dependency_overrides.pop(get_llm_client, None)
 
 
 async def test_post_grammar_returns_200_and_valid_schema() -> None:

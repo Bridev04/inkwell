@@ -9,5 +9,6 @@ from app.models.feedback import Feedback
 from app.models.grammar_check import GrammarCheck
 from app.models.paraphrase import Paraphrase
 from app.models.rewrite import Rewrite
+from app.models.user import User
 
-__all__ = ["Document", "Feedback", "GrammarCheck", "Paraphrase", "Rewrite"]
+__all__ = ["Document", "Feedback", "GrammarCheck", "Paraphrase", "Rewrite", "User"]

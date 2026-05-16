@@ -9,8 +9,9 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import get_llm_client
+from app.api.deps import get_current_user, get_llm_client
 from app.db.session import get_session
+from app.models.user import User
 from app.schemas.rewrite import RewriteRequest
 from app.services.llm.base import LLMClient
 from app.services.rewrite_service import stream_rewrite
@@ -26,6 +27,7 @@ _STREAM_HEADERS = {
 @router.post("/rewrites")
 async def create_rewrite(
     req: RewriteRequest,
+    user: User = Depends(get_current_user),  # noqa: B008
     llm: LLMClient = Depends(get_llm_client),  # noqa: B008
     session: AsyncSession = Depends(get_session),  # noqa: B008
 ) -> StreamingResponse:
@@ -36,7 +38,7 @@ async def create_rewrite(
     When ``save=true``, a ``document`` event follows ``done`` with the saved document id.
     Pre-flight provider failures are returned as standard HTTP error codes.
     """
-    gen = stream_rewrite(req, llm, session=session)
+    gen = stream_rewrite(req, llm, session=session, user_id=user.id)
 
     # Eagerly fetch the first SSE frame so pre-flight provider errors can be
     # mapped to HTTP status codes before any bytes are sent to the client.
