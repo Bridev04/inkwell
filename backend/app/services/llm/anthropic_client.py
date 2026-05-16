@@ -75,6 +75,7 @@ class AnthropicClient:
         prompt: str,
         response_schema: type[BaseModel],
         system: str | None = None,
+        max_tokens: int | None = None,
     ) -> tuple[BaseModel, TokenUsage, str]:
         """Force-call a single tool whose schema mirrors `response_schema`.
 
@@ -82,6 +83,7 @@ class AnthropicClient:
         schema, so validation failures indicate a genuine schema mismatch
         rather than a formatting glitch.
         """
+        effective_max_tokens = max_tokens if max_tokens is not None else self._max_tokens
         tool_name = response_schema.__name__
         tool: ToolParam = {
             "name": tool_name,
@@ -93,7 +95,7 @@ class AnthropicClient:
 
         response = await self._client.messages.create(
             model=self._default_model,
-            max_tokens=self._max_tokens,
+            max_tokens=effective_max_tokens,
             messages=[user_message],
             system=system if system is not None else anthropic.Omit(),
             tools=[tool],

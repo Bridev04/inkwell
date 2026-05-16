@@ -137,10 +137,7 @@ function GrammarPanel({
 }) {
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <SectionLabel className="block">Grammar Check</SectionLabel>
-        <Hairline variant="gold" />
-      </div>
+      <SectionLabel className="block">Grammar Check</SectionLabel>
       <Hairline variant="gold" />
 
       <div className="flex items-center gap-2">
@@ -205,9 +202,29 @@ function StreamPanel({
   reducedMotion: boolean;
   savedId?: string | null;
 }) {
+  const [copied, setCopied] = useState(false);
+
+  function handleCopy() {
+    if (!text) return;
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
+
   return (
     <div className="space-y-4">
-      <SectionLabel className="block">{title}</SectionLabel>
+      <div className="flex items-center justify-between">
+        <SectionLabel className="block">{title}</SectionLabel>
+        {!isStreaming && text && (
+          <button
+            onClick={handleCopy}
+            className="font-sans text-xs text-stone-400 hover:text-ink transition-colors"
+          >
+            {copied ? 'Copied!' : 'Copy'}
+          </button>
+        )}
+      </div>
       <Hairline variant="gold" />
       <TypewriterStream fullText={text} isStreaming={isStreaming} reducedMotion={reducedMotion} />
       {!isStreaming && savedId && (
@@ -480,94 +497,85 @@ export default function DeskPage() {
             />
 
             {/* Controls */}
-            <div className="flex flex-col sm:flex-row sm:items-center gap-4 mt-4">
-              {/* Rewrite style */}
-              <div className="flex flex-col gap-1">
-                <label htmlFor="rewrite-style-select">
-                  <SectionLabel>Rewrite style</SectionLabel>
-                </label>
-                <select
-                  id="rewrite-style-select"
-                  value={rewriteStyle}
-                  onChange={(e) => setRewriteStyle(e.target.value as RewriteStyle)}
-                  className="bg-cream border border-stone-300 rounded-md px-3 py-1.5 font-sans text-xs text-ink focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2 focus-visible:ring-offset-cream focus:outline-none"
+            <div className="flex flex-col gap-3 mt-4">
+              {/* Row 1: direct-action tools + save toggle */}
+              <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  size="sm"
+                  onClick={handleFeedback}
+                  disabled={isBusy || !draft.trim()}
+                  className="text-xs"
                 >
-                  {REWRITE_STYLES.map((s) => (
-                    <option key={s.value} value={s.value}>{s.label}</option>
-                  ))}
-                </select>
+                  {loading && activeTool === 'feedback' ? 'Analyzing…' : 'Get Feedback'}
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={handleGrammar}
+                  disabled={isBusy || !draft.trim()}
+                  className="text-xs"
+                >
+                  {loading && activeTool === 'grammar' ? 'Checking…' : 'Check Grammar'}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleTone}
+                  disabled={isBusy || !draft.trim()}
+                  className="text-xs"
+                >
+                  {loading && activeTool === 'tone' ? 'Analyzing…' : 'Analyze Tone'}
+                </Button>
+                <label className="flex items-center gap-2 cursor-pointer ml-auto" htmlFor="desk-save-switch">
+                  <Switch id="desk-save-switch" checked={save} onCheckedChange={setSave} size="sm" />
+                  <SectionLabel as="span">Save</SectionLabel>
+                </label>
               </div>
 
-              {/* Paraphrase mode */}
-              <div className="flex flex-col gap-1">
-                <label htmlFor="paraphrase-mode-select">
-                  <SectionLabel>Paraphrase mode</SectionLabel>
-                </label>
-                <select
-                  id="paraphrase-mode-select"
-                  value={paraphraseMode}
-                  onChange={(e) => setParaphraseMode(e.target.value as ParaphraseMode)}
-                  className="bg-cream border border-stone-300 rounded-md px-3 py-1.5 font-sans text-xs text-ink focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2 focus-visible:ring-offset-cream focus:outline-none"
-                >
-                  {PARAPHRASE_MODES.map((m) => (
-                    <option key={m.value} value={m.value}>{m.label}</option>
-                  ))}
-                </select>
+              {/* Row 2: split-button tools paired with their mode selector */}
+              <div className="flex flex-wrap items-stretch gap-2">
+                <div className="flex items-stretch rounded-md border border-stone-300 overflow-hidden">
+                  <button
+                    onClick={handleRewrite}
+                    disabled={isBusy || !draft.trim()}
+                    className="px-3 font-sans text-[0.8rem] text-ink border-r border-stone-300 hover:bg-stone-300/20 transition-colors disabled:opacity-50 disabled:pointer-events-none whitespace-nowrap"
+                  >
+                    {isRewriteStreaming ? 'Writing…' : 'Rewrite'}
+                  </button>
+                  <select
+                    value={rewriteStyle}
+                    onChange={(e) => setRewriteStyle(e.target.value as RewriteStyle)}
+                    disabled={isBusy}
+                    aria-label="Rewrite style"
+                    className="px-2 font-sans text-xs text-stone-500 bg-cream focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-gold disabled:opacity-50"
+                  >
+                    {REWRITE_STYLES.map((s) => (
+                      <option key={s.value} value={s.value}>{s.label}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="flex items-stretch rounded-md border border-stone-300 overflow-hidden">
+                  <button
+                    onClick={handleParaphrase}
+                    disabled={isBusy || !draft.trim()}
+                    className="px-3 font-sans text-[0.8rem] text-ink border-r border-stone-300 hover:bg-stone-300/20 transition-colors disabled:opacity-50 disabled:pointer-events-none whitespace-nowrap"
+                  >
+                    {isParaphraseStreaming ? 'Paraphrasing…' : 'Paraphrase'}
+                  </button>
+                  <select
+                    value={paraphraseMode}
+                    onChange={(e) => setParaphraseMode(e.target.value as ParaphraseMode)}
+                    disabled={isBusy}
+                    aria-label="Paraphrase mode"
+                    className="px-2 font-sans text-xs text-stone-500 bg-cream focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-gold disabled:opacity-50"
+                  >
+                    {PARAPHRASE_MODES.map((m) => (
+                      <option key={m.value} value={m.value}>{m.label}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
-
-              {/* Save toggle */}
-              <label className="flex items-center gap-2 cursor-pointer sm:ml-auto" htmlFor="desk-save-switch">
-                <Switch id="desk-save-switch" checked={save} onCheckedChange={setSave} size="sm" />
-                <SectionLabel as="span">Save draft</SectionLabel>
-              </label>
-            </div>
-
-            {/* Action buttons */}
-            <div className="flex flex-wrap gap-2 mt-5">
-              <Button
-                size="sm"
-                onClick={handleFeedback}
-                disabled={isBusy || !draft.trim()}
-                className="text-xs"
-              >
-                {loading && activeTool === 'feedback' ? 'Analyzing…' : 'Get Feedback'}
-              </Button>
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={handleRewrite}
-                disabled={isBusy || !draft.trim()}
-                className="text-xs"
-              >
-                {isRewriteStreaming ? 'Writing…' : 'Rewrite Draft'}
-              </Button>
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={handleGrammar}
-                disabled={isBusy || !draft.trim()}
-                className="text-xs"
-              >
-                {loading && activeTool === 'grammar' ? 'Checking…' : 'Check Grammar'}
-              </Button>
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={handleParaphrase}
-                disabled={isBusy || !draft.trim()}
-                className="text-xs"
-              >
-                {isParaphraseStreaming ? 'Paraphrasing…' : 'Paraphrase'}
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleTone}
-                disabled={isBusy || !draft.trim()}
-                className="text-xs"
-              >
-                {loading && activeTool === 'tone' ? 'Analyzing…' : 'Analyze Tone'}
-              </Button>
             </div>
 
             {/* Error state */}
@@ -583,15 +591,17 @@ export default function DeskPage() {
         {/* Right panel                                                        */}
         {/* ---------------------------------------------------------------- */}
         <aside
-          className="w-80 shrink-0 border-l border-stone-300 overflow-y-auto bg-cream"
+          className="w-[38%] min-w-[340px] max-w-[480px] shrink-0 border-l border-stone-300 overflow-y-auto bg-cream"
           aria-label="Results panel"
           aria-live="polite"
           aria-busy={isBusy}
         >
           <div className="p-6 space-y-8">
-            {/* Loading placeholder */}
-            {isBusy && !activeTool && (
-              <Mono className="text-stone-500 text-xs">Working…</Mono>
+            {/* Empty state */}
+            {!activeTool && !error && (
+              <p className="font-sans text-sm text-stone-400 leading-relaxed text-center py-6">
+                Run a tool to see results here.
+              </p>
             )}
 
             {/* Feedback / Tone results */}

@@ -184,6 +184,7 @@ async def check_grammar(req: GrammarRequest, llm: LLMClient) -> GrammarResponse:
                 prompt=prompt,
                 response_schema=_LLMGrammarPayload,
                 system=_SYSTEM_PROMPT,
+                max_tokens=4096,
             )
             break
         except ValidationError as exc:

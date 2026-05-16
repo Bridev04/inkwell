@@ -88,6 +88,7 @@ class FakeLLMClient(LLMClient):
         prompt: str,
         response_schema: type[BaseModel],
         system: str | None = None,
+        max_tokens: int | None = None,
     ) -> tuple[BaseModel, TokenUsage, str]:
         idx = min(self._structured_cursor, len(self.structured_responses) - 1)
         self._structured_cursor += 1

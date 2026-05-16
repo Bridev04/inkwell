@@ -49,6 +49,7 @@ class LLMClient(Protocol):
         prompt: str,
         response_schema: type[BaseModel],
         system: str | None = None,
+        max_tokens: int | None = None,
     ) -> tuple[BaseModel, TokenUsage, str]:
         """Generate a completion and parse the response into a Pydantic model.
 

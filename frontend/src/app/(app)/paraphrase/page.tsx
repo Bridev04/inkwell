@@ -51,11 +51,20 @@ export default function ParaphrasePage() {
   const [error, setError] = useState<string | null>(null);
   const [outputText, setOutputText] = useState('');
   const [savedId, setSavedId] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
   const [reducedMotion] = useState(() =>
     typeof window !== 'undefined'
       ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
       : false
   );
+
+  function handleCopy() {
+    if (!outputText) return;
+    navigator.clipboard.writeText(outputText).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
 
   async function handleParaphrase() {
     if (!draft.trim() || overLimit) return;
@@ -189,9 +198,19 @@ export default function ParaphrasePage() {
           {(outputText || isStreaming) ? (
             <>
               <div>
-                <SectionLabel className="block mb-1">
-                  {PARAPHRASE_MODES.find((m) => m.value === mode)?.label ?? 'Paraphrase'}
-                </SectionLabel>
+                <div className="flex items-center justify-between mb-1">
+                  <SectionLabel className="block">
+                    {PARAPHRASE_MODES.find((m) => m.value === mode)?.label ?? 'Paraphrase'}
+                  </SectionLabel>
+                  {!isStreaming && outputText && (
+                    <button
+                      onClick={handleCopy}
+                      className="font-sans text-xs text-stone-400 hover:text-ink transition-colors"
+                    >
+                      {copied ? 'Copied!' : 'Copy'}
+                    </button>
+                  )}
+                </div>
                 <Hairline variant="gold" className="mb-3" />
               </div>
               <TypewriterStream

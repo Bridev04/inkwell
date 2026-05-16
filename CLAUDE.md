@@ -121,6 +121,8 @@ backend/app/
    - [x] New `GrammarScores` schema: per-category + overall score (0-100) + label (Needs work / Fair / Good / Great)
    - [x] Deterministic scoring formula in `grammar_service.py`; 19 backend tests covering all branches
    - [x] Grammar checker UX: manual-only checks (no debounce auto-trigger on paste/edit); `isReviewing` + `isChecking` state model so "Check again" re-checks in-place without clearing the panel; "Edit" button returns to textarea with accepted-fixes text while keeping panel results visible
+   - [x] Frontend UI polish: Writing Desk right panel width consistent with Grammar/Paraphrase pages; split-button controls pair Rewrite/Paraphrase inline with their mode selectors; copy-to-clipboard on all streaming result panels; empty right-panel placeholder state; double hairline bug fixed in desk GrammarPanel
+   - [x] Grammar checker bug fix: `generate_structured` accepts `max_tokens` override; grammar service passes `max_tokens=4096` — fixes silent empty-result bug on texts with many issues where 1024-token default caused Haiku to return `{"issues": []}`
 
 ### Up Next
 - [ ] User model + JWT auth
