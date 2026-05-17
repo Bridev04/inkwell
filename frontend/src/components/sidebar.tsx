@@ -6,6 +6,8 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { LayoutDashboard, PenLine, FolderOpen, SpellCheck, ArrowLeftRight, LogOut } from 'lucide-react';
 
+import { cn } from '@/lib/utils';
+
 import { getMe, logout, type UserRead } from '@/lib/auth';
 
 const NAV_ITEMS = [
@@ -32,7 +34,7 @@ export function Sidebar() {
   }
 
   return (
-    <aside className="w-56 min-h-screen bg-cream border-r border-stone-300 flex flex-col shrink-0">
+    <aside className="w-56 min-h-screen bg-panel-raised border-r border-stone-300 flex flex-col shrink-0">
       {/* Logo */}
       <div className="px-5 py-5 border-b border-stone-300">
         <Link href="/" aria-label="Draftwell home">
@@ -57,12 +59,12 @@ export function Sidebar() {
             <Link
               key={href}
               href={href}
-              className={[
-                'flex items-center gap-3 px-3 py-2 rounded-md font-sans text-sm transition-colors duration-150',
+              className={cn(
+                'relative flex items-center gap-3 px-3 py-2 rounded-md font-sans text-sm transition-colors duration-150',
                 isActive
-                  ? 'bg-stone-300/50 text-ink-strong font-medium'
-                  : 'text-stone-500 hover:text-ink hover:bg-stone-300/30',
-              ].join(' ')}
+                  ? 'text-ink-strong font-medium before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-4 before:w-[2px] before:bg-gold before:rounded-full'
+                  : 'text-stone-500 hover:text-ink hover:bg-stone-300/20',
+              )}
               aria-current={isActive ? 'page' : undefined}
             >
               <Icon size={15} aria-hidden />

@@ -19,10 +19,10 @@ export function DisplayHeading({
       className={cn(
         'font-serif text-balance tracking-tight text-ink-strong',
         variant === 'h1'
-          ? 'text-5xl lg:text-6xl'
+          ? 'text-[3rem] lg:text-[3.75rem]'
           : variant === 'h2'
-            ? 'text-4xl lg:text-5xl'
-            : 'text-2xl lg:text-3xl',
+            ? 'text-[2.25rem] lg:text-[3rem]'
+            : 'text-[1.5rem] lg:text-[1.875rem]',
         className
       )}
       {...props}
@@ -58,7 +58,7 @@ export function BodyProse({
 }: React.HTMLAttributes<HTMLParagraphElement>) {
   return (
     <p
-      className={cn('font-sans text-ink leading-relaxed max-w-prose', className)}
+      className={cn('font-sans text-[0.9375rem] text-ink leading-[1.6] max-w-prose', className)}
       {...props}
     />
   );

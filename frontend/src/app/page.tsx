@@ -1,16 +1,12 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { SiteFooter } from '@/components/site-footer';
+import { SkipLink } from '@/components/skip-link';
 
 export default function Home() {
   return (
     <>
-      <a
-        href="#main-content"
-        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:bg-cream focus:border focus:border-gold focus:rounded-md focus:px-4 focus:py-2 focus:font-sans focus:text-sm focus:text-ink"
-      >
-        Skip to content
-      </a>
+      <SkipLink href="#main-content" label="Skip to content" />
 
       {/* Hero */}
       <header className="min-h-[70vh] flex items-center justify-center px-6">

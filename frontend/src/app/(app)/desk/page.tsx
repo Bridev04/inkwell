@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { TypewriterStream } from '@/components/typewriter-stream';
 import { SectionLabel, BodyProse, Mono } from '@/components/typography';
+import { SkipLink } from '@/components/skip-link';
 import { Hairline } from '@/components/hairline';
 import {
   submitFeedback,
@@ -248,11 +249,11 @@ function QuickActions({ onNew }: { onNew: () => void }) {
       <SectionLabel className="block">Quick Actions</SectionLabel>
       <Hairline />
       <div className="grid grid-cols-2 gap-2">
-        <Button variant="secondary" size="sm" onClick={onNew} className="text-xs">
+        <Button variant="secondary" size="sm" onClick={onNew}>
           New Draft
         </Button>
         <Link href="/documents">
-          <Button variant="secondary" size="sm" className="text-xs w-full">
+          <Button variant="secondary" size="sm" className="w-full">
             Documents
           </Button>
         </Link>
@@ -445,13 +446,7 @@ export default function DeskPage() {
 
   return (
     <>
-      {/* Skip link */}
-      <a
-        href="#desk-textarea"
-        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:bg-cream focus:border focus:border-gold focus:rounded-md focus:px-4 focus:py-2 focus:font-sans focus:text-sm focus:text-ink"
-      >
-        Skip to editor
-      </a>
+      <SkipLink href="#desk-textarea" label="Skip to editor" />
 
       <div className="flex flex-1 overflow-hidden">
         {/* ---------------------------------------------------------------- */}
@@ -461,7 +456,7 @@ export default function DeskPage() {
           <div className="px-8 py-8 max-w-3xl">
             {/* Page heading */}
             <div className="mb-6">
-              <h1 className="font-serif text-2xl font-semibold text-ink-strong">Writing Desk</h1>
+              <h1 className="font-serif text-[1.75rem] font-semibold text-ink-strong">Writing Desk</h1>
               <p className="font-sans text-sm text-stone-500 mt-0.5">
                 Refine your draft with thoughtful AI feedback.
               </p>
@@ -486,7 +481,7 @@ export default function DeskPage() {
               placeholder="Paste or type your draft here…"
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
-              className="min-h-[320px] font-serif text-base leading-relaxed"
+              className="min-h-[320px] font-serif text-[1.0625rem] leading-[1.7]"
               aria-label="Your draft"
             />
 
@@ -498,7 +493,6 @@ export default function DeskPage() {
                   size="sm"
                   onClick={handleFeedback}
                   disabled={isBusy || !draft.trim()}
-                  className="text-xs"
                 >
                   {loading && activeTool === 'feedback' ? 'Analyzing…' : 'Get Feedback'}
                 </Button>
@@ -507,7 +501,6 @@ export default function DeskPage() {
                   size="sm"
                   onClick={handleGrammar}
                   disabled={isBusy || !draft.trim()}
-                  className="text-xs"
                 >
                   {loading && activeTool === 'grammar' ? 'Checking…' : 'Check Grammar'}
                 </Button>
@@ -516,7 +509,6 @@ export default function DeskPage() {
                   size="sm"
                   onClick={handleTone}
                   disabled={isBusy || !draft.trim()}
-                  className="text-xs"
                 >
                   {loading && activeTool === 'tone' ? 'Analyzing…' : 'Analyze Tone'}
                 </Button>
@@ -585,7 +577,7 @@ export default function DeskPage() {
         {/* Right panel                                                        */}
         {/* ---------------------------------------------------------------- */}
         <aside
-          className="w-[38%] min-w-[340px] max-w-[480px] shrink-0 border-l border-stone-300 overflow-y-auto bg-cream"
+          className="w-[38%] min-w-[340px] max-w-[480px] shrink-0 border-l border-stone-300 overflow-y-auto bg-panel-sunken"
           aria-label="Results panel"
           aria-live="polite"
           aria-busy={isBusy}
@@ -600,7 +592,7 @@ export default function DeskPage() {
 
             {/* Feedback / Tone results */}
             {activeTool && (activeTool === 'feedback' || activeTool === 'tone') && (
-              <div>
+              <div className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-right-2 motion-safe:duration-200">
                 {loading && !feedbackResult && (
                   <Mono className="text-stone-500 text-xs">Analyzing…</Mono>
                 )}
@@ -612,18 +604,20 @@ export default function DeskPage() {
 
             {/* Rewrite result */}
             {activeTool === 'rewrite' && (
-              <StreamPanel
-                title="Rewrite"
-                text={rewriteText}
-                isStreaming={isRewriteStreaming}
-                reducedMotion={reducedMotion}
-                savedId={rewriteDocId}
-              />
+              <div className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-right-2 motion-safe:duration-200">
+                <StreamPanel
+                  title="Rewrite"
+                  text={rewriteText}
+                  isStreaming={isRewriteStreaming}
+                  reducedMotion={reducedMotion}
+                  savedId={rewriteDocId}
+                />
+              </div>
             )}
 
             {/* Grammar result */}
             {activeTool === 'grammar' && (
-              <div>
+              <div className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-right-2 motion-safe:duration-200">
                 {loading && !grammarResult && (
                   <Mono className="text-stone-500 text-xs">Checking grammar…</Mono>
                 )}
@@ -635,13 +629,15 @@ export default function DeskPage() {
 
             {/* Paraphrase result */}
             {activeTool === 'paraphrase' && (
-              <StreamPanel
-                title="Paraphrase"
-                text={paraphraseText}
-                isStreaming={isParaphraseStreaming}
-                reducedMotion={reducedMotion}
-                savedId={paraphraseDocId}
-              />
+              <div className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-right-2 motion-safe:duration-200">
+                <StreamPanel
+                  title="Paraphrase"
+                  text={paraphraseText}
+                  isStreaming={isParaphraseStreaming}
+                  reducedMotion={reducedMotion}
+                  savedId={paraphraseDocId}
+                />
+              </div>
             )}
 
             {/* Quick actions — always visible */}

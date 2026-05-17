@@ -63,7 +63,7 @@ export default function DocumentsPage() {
             <li key={doc.id}>
               <Link
                 href={`/documents/${doc.id}`}
-                className="group block border border-stone-300 rounded-md p-6 bg-cream hover:border-ink transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
+                className="group block border border-stone-300 rounded-md p-6 bg-cream hover:border-ink transition-[border-color,transform,box-shadow] duration-150 ease-out motion-safe:hover:-translate-y-0.5 motion-safe:hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
               >
                 <DisplayHeading as="h2" variant="h3" className="truncate mb-2">
                   {snippet(doc)}
