@@ -38,20 +38,23 @@ _PENALTY: dict[str, int] = {
 
 _SYSTEM_PROMPT = """\
 You are a meticulous copy-editor. Identify every grammar, spelling, punctuation, \
-and style issue in the submitted text.
+and style issue in the submitted text, and return a fully corrected version.
 
 For each issue provide:
   - category: exactly one of "grammar", "spelling", "punctuation", "style"
-  - original: the exact verbatim substring that is wrong (a word or short phrase)
+  - original: the EXACT verbatim substring copied character-for-character from the text
   - replacement: the corrected text that should replace it
   - short_label: a 3-7 word imperative label (e.g. "Change the verb tense")
   - explanation: one concise sentence explaining why it is wrong
 
+Also return:
+  - corrected_text: the complete input text with every single issue corrected
+
 Rules:
-- "original" must be copied exactly from the text, including surrounding spaces only \
-if they are part of the error.
+- "original" must be copied verbatim — do not paraphrase, add quotes, or change case.
+- "corrected_text" must be the FULL input text with all corrections applied.
 - Do not report the same span twice.
-- If the text has no issues, return an empty list.
+- If the text has no issues, return an empty list and set corrected_text equal to the input.
 """
 
 
@@ -64,6 +67,7 @@ class _LLMIssueItem(BaseModel):
 
 
 class _LLMGrammarPayload(BaseModel):
+    corrected_text: str = ""
     issues: list[_LLMIssueItem] = Field(default_factory=list)
 
 
@@ -116,34 +120,75 @@ def _compute_scores(issues: list[GrammarIssue], word_count: int) -> GrammarScore
 def _derive_issues(text: str, llm_issues: list[_LLMIssueItem]) -> list[GrammarIssue]:
     """Locate each LLM-reported original in text and build GrammarIssue objects.
 
-    Issues whose original string cannot be found in text, or whose
-    text[start:end] != original, are silently dropped — the LLM sometimes
-    hallucinates spans that don't exist verbatim.
+    Issues whose original string cannot be found in text are dropped, but a
+    .strip() fallback is attempted first to tolerate LLM-added whitespace.
+    The search cursor advances past each matched span so repeated words map
+    to distinct positions rather than all collapsing to the first occurrence.
     """
     result: list[GrammarIssue] = []
     seen_spans: set[tuple[int, int]] = set()
+    search_from = 0
 
     for item in llm_issues:
         if not item.original:
             continue
-        pos = text.find(item.original)
+
+        # Try exact match from current cursor; fall back to stripped version.
+        canonical = item.original
+        pos = text.find(canonical, search_from)
         if pos < 0:
+            stripped = canonical.strip()
+            if stripped and stripped != canonical:
+                pos = text.find(stripped, search_from)
+                if pos >= 0:
+                    canonical = stripped
+            # If still not found, try from the beginning of the text (the
+            # LLM may return issues out of order).
+            if pos < 0:
+                pos = text.find(canonical)
+            if pos < 0 and canonical != item.original.strip():
+                pos = text.find(item.original.strip())
+                if pos >= 0:
+                    canonical = item.original.strip()
+
+        if pos < 0:
+            logger.warning(
+                "event=grammar_issue_dropped reason=not_found original=%r",
+                item.original,
+            )
             continue
-        end = pos + len(item.original)
-        # Validate the slice (guards against multi-byte edge cases).
-        if text[pos:end] != item.original:
+
+        end = pos + len(canonical)
+        if text[pos:end] != canonical:
+            logger.warning(
+                "event=grammar_issue_dropped reason=slice_mismatch original=%r",
+                item.original,
+            )
             continue
+
         span = (pos, end)
         if span in seen_spans:
-            continue
+            # Advance one character and retry so repeated-word issues get
+            # distinct positions rather than being silently discarded.
+            retry_pos = text.find(canonical, pos + 1)
+            if retry_pos >= 0:
+                retry_span = (retry_pos, retry_pos + len(canonical))
+                if retry_span not in seen_spans:
+                    pos, end, span = retry_pos, retry_pos + len(canonical), retry_span
+                else:
+                    continue
+            else:
+                continue
+
         seen_spans.add(span)
+        search_from = pos + 1
         result.append(
             GrammarIssue(
                 id=str(len(result)),
                 category=IssueCategory(item.category),
                 start=pos,
                 end=end,
-                original=item.original,
+                original=canonical,
                 replacement=item.replacement,
                 short_label=item.short_label,
                 explanation=item.explanation,
@@ -184,7 +229,7 @@ async def check_grammar(req: GrammarRequest, llm: LLMClient) -> GrammarResponse:
                 prompt=prompt,
                 response_schema=_LLMGrammarPayload,
                 system=_SYSTEM_PROMPT,
-                max_tokens=4096,
+                max_tokens=8192,
             )
             break
         except ValidationError as exc:
@@ -207,16 +252,21 @@ async def check_grammar(req: GrammarRequest, llm: LLMClient) -> GrammarResponse:
     scores = _compute_scores(issues, wc)
 
     latency_ms = int((time.monotonic() - start_ts) * 1000)
+    dropped = len(payload.issues) - len(issues)
     logger.info(
-        "event=grammar_check text_len=%d issues=%d overall=%d overall_label=%s latency_ms=%d",
+        "event=grammar_check text_len=%d llm_issues=%d derived=%d dropped=%d "
+        "overall=%d overall_label=%s latency_ms=%d",
         len(req.text),
+        len(payload.issues),
         len(issues),
+        dropped,
         scores.overall,
         scores.overall_label,
         latency_ms,
     )
 
     return GrammarResponse(
+        corrected_text=payload.corrected_text,
         issues=issues,
         scores=scores,
         word_count=wc,

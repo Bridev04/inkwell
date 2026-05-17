@@ -106,6 +106,7 @@ export interface GrammarRequest {
 
 export interface GrammarResponse {
   document_id: string | null;
+  corrected_text: string;
   issues: GrammarIssue[];
   scores: GrammarScores;
   word_count: number;

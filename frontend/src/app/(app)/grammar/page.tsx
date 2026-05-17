@@ -407,6 +407,14 @@ export default function GrammarPage() {
     if (activeIndex === idx) setActiveIndex(null);
   }
 
+  function handleApplyAiFixes() {
+    if (!result?.corrected_text) return;
+    setWorkingText(result.corrected_text);
+    setAccepted(new Set(issues.map((_, i) => i)));
+    setDismissed(new Set());
+    setActiveIndex(null);
+  }
+
   function handleEdit() {
     setIsReviewing(false);
     if (workingText) setDraft(workingText);
@@ -474,7 +482,17 @@ export default function GrammarPage() {
                 <Button variant="secondary" size="sm" onClick={handleEdit} disabled={isChecking} className="text-xs">
                   Edit
                 </Button>
-                {accepted.size > 0 && (
+                {result?.corrected_text && totalUnresolved > 0 && (
+                  <Button
+                    size="sm"
+                    onClick={handleApplyAiFixes}
+                    disabled={isChecking}
+                    className="text-xs ml-auto"
+                  >
+                    Apply All AI Fixes
+                  </Button>
+                )}
+                {accepted.size > 0 && !result?.corrected_text && (
                   <span className="font-sans text-xs text-stone-500">
                     {accepted.size} fix{accepted.size !== 1 ? 'es' : ''} applied
                   </span>

@@ -131,13 +131,25 @@ function FeedbackPanel({ result, savedId }: { result: FeedbackResponse; savedId?
 function GrammarPanel({
   result,
   savedId,
+  onReplaceDraft,
 }: {
   result: GrammarResponse;
   savedId?: string | null;
+  onReplaceDraft?: (corrected: string) => void;
 }) {
   return (
     <div className="space-y-4">
-      <SectionLabel className="block">Grammar Check</SectionLabel>
+      <div className="flex items-center justify-between">
+        <SectionLabel className="block">Grammar Check</SectionLabel>
+        {result.corrected_text && result.issues.length > 0 && onReplaceDraft && (
+          <button
+            onClick={() => onReplaceDraft(result.corrected_text)}
+            className="font-sans text-xs font-semibold text-emerald-700 hover:text-emerald-800 transition-colors"
+          >
+            Apply All Fixes
+          </button>
+        )}
+      </div>
       <Hairline variant="gold" />
 
       <div className="flex items-center gap-2">
@@ -622,7 +634,11 @@ export default function DeskPage() {
                   <Mono className="text-stone-500 text-xs">Checking grammar…</Mono>
                 )}
                 {grammarResult && (
-                  <GrammarPanel result={grammarResult} savedId={grammarDocId} />
+                  <GrammarPanel
+                    result={grammarResult}
+                    savedId={grammarDocId}
+                    onReplaceDraft={(corrected) => { setDraft(corrected); setActiveTool(null); }}
+                  />
                 )}
               </div>
             )}
