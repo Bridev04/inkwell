@@ -141,11 +141,17 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 def create_app() -> FastAPI:
     """Application factory. Keeps top-level state explicit and testable."""
+    _prod = settings.environment == "production"
     app = FastAPI(
         title=settings.app_name,
         version="0.1.0",
         debug=settings.debug,
         lifespan=lifespan,
+        # Disable interactive docs in production — schema is not a secret but
+        # there is no reason to expose it to the public internet.
+        docs_url=None if _prod else "/docs",
+        redoc_url=None if _prod else "/redoc",
+        openapi_url=None if _prod else "/openapi.json",
     )
     app.state.limiter = limiter
     app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)  # type: ignore[arg-type]

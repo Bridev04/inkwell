@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import logging
 import secrets
+import time
 import uuid
 from base64 import urlsafe_b64encode
 from typing import Any
@@ -27,6 +28,12 @@ GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth"
 GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"
 GOOGLE_JWKS_URL = "https://www.googleapis.com/oauth2/v3/certs"
 GOOGLE_ISSUERS = frozenset({"accounts.google.com", "https://accounts.google.com"})
+
+# Google rotates keys roughly every 6 hours; cache for 1 hour so we stay fresh
+# without hammering their endpoint on every OAuth callback.
+_JWKS_TTL: float = 3600.0
+_jwks_cache: dict[str, Any] = {}
+_jwks_fetched_at: float = 0.0
 
 
 def generate_pkce_pair() -> tuple[str, str]:
@@ -94,11 +101,22 @@ async def exchange_code(
 
 
 async def fetch_google_jwks() -> dict[str, Any]:
-    """Fetch Google's current public key set."""
+    """Fetch Google's current public key set, cached for 1 hour.
+
+    Single-process safe (Procfile pins --workers 1).  If worker count is ever
+    raised, move the cache to Redis.
+    """
+    global _jwks_cache, _jwks_fetched_at
+    now = time.monotonic()
+    if _jwks_cache and now - _jwks_fetched_at < _JWKS_TTL:
+        return _jwks_cache
     async with httpx.AsyncClient() as client:
         r = await client.get(GOOGLE_JWKS_URL)
         r.raise_for_status()
-        return r.json()  # type: ignore[no-any-return]
+        data: dict[str, Any] = r.json()
+    _jwks_cache = data
+    _jwks_fetched_at = now
+    return _jwks_cache
 
 
 def validate_id_token(

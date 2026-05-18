@@ -14,7 +14,8 @@ Architecture:
 from __future__ import annotations
 
 import pathlib
-from collections.abc import AsyncGenerator
+from collections.abc import AsyncGenerator, Generator
+from typing import Any
 
 import pytest
 import pytest_asyncio
@@ -48,7 +49,7 @@ def reset_rate_limiter() -> None:
 
 
 @pytest.fixture(scope="session")
-def postgres_container():  # type: ignore[return]
+def postgres_container() -> Generator[Any, None, None]:
     """Start a Postgres 16 testcontainer for the whole test session.
 
     Session-scoped so the container (and its data) live across all test
