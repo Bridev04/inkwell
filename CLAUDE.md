@@ -142,6 +142,50 @@ backend/app/
 - [ ] Deployment (Railway)
 
 
+## Deployment Notes (Railway)
+
+### Security constraints — do not remove
+
+**`--workers 1` in `backend/Procfile` is intentional.**
+The slowapi rate limiter uses in-memory storage shared within a single process. Multiple
+workers would give each worker independent counters, making the effective limit N × declared.
+If you ever scale to multiple workers, provision Redis and configure `storage_uri` in
+`app/core/limiter.py` first.
+
+**`samesite="strict"` on the `access_token` cookie is intentional.**
+All browser traffic reaches the backend via the Next.js same-origin proxy (`/api/*` rewrites),
+so `strict` is safe and eliminates CSRF without a token. The `oauth_state` cookie stays `lax`
+because it must survive the cross-site redirect from Google back to the callback URL.
+
+### Pre-deploy checklist
+
+Before going live, verify the production startup guard fires correctly:
+
+```bash
+# From backend/ — should fail with a ValueError about JWT_SECRET_KEY
+ENVIRONMENT=production JWT_SECRET_KEY=weak CORS_ALLOWED_ORIGINS=http://localhost:3000 \
+  uv run python -c "from app.config import Settings; Settings()"
+
+# Should also fail — CORS is localhost-only
+ENVIRONMENT=production JWT_SECRET_KEY=$(python -c "import secrets; print(secrets.token_hex(32))") \
+  CORS_ALLOWED_ORIGINS=http://localhost:3000 \
+  uv run python -c "from app.config import Settings; Settings()"
+
+# Should succeed
+ENVIRONMENT=production JWT_SECRET_KEY=$(python -c "import secrets; print(secrets.token_hex(32))") \
+  CORS_ALLOWED_ORIGINS=https://draftwell.vercel.app \
+  uv run python -c "from app.config import Settings; Settings(); print('OK')"
+```
+
+Railway environment variables to set:
+- `ENVIRONMENT=production`
+- `JWT_SECRET_KEY` — 64-char hex: `python -c "import secrets; print(secrets.token_hex(32))"`
+- `CORS_ALLOWED_ORIGINS` — exact Vercel URL, e.g. `https://draftwell.vercel.app`
+- `ANTHROPIC_API_KEY` — from Anthropic console (never commit)
+- `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` — from Google Cloud Console (never commit)
+- `DATABASE_URL` / `DATABASE_URL_SYNC` — Railway Postgres URLs
+
+
 ## Local DB Setup
 
 ```bash

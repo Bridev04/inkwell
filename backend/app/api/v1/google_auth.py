@@ -165,7 +165,7 @@ async def google_callback(
         value=token,
         httponly=True,
         secure=settings.environment == "production",
-        samesite="lax",
+        samesite="strict",  # all API traffic goes through the Next.js same-origin proxy
         max_age=settings.jwt_expiry_minutes * 60,
     )
     response.delete_cookie(key=_STATE_COOKIE, path="/")

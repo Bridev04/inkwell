@@ -23,7 +23,7 @@ def _set_auth_cookie(response: Response, token: str, settings: Settings) -> None
         value=token,
         httponly=True,
         secure=settings.environment == "production",
-        samesite="lax",
+        samesite="strict",  # all API traffic goes through the Next.js same-origin proxy
         max_age=settings.jwt_expiry_minutes * 60,
     )
 
@@ -74,7 +74,7 @@ async def logout(
         key="access_token",
         httponly=True,
         secure=settings.environment == "production",
-        samesite="lax",
+        samesite="strict",
         path="/",
     )
 

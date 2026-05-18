@@ -2,8 +2,11 @@
 
 Default key: real client IP, X-Forwarded-For-aware (required behind Railway's proxy).
 LLM endpoints use ``get_user_or_ip`` so the budget is per-account, not per-IP.
-In-memory storage is sufficient for a single-process Railway deployment; swap to
-a Redis backend (SLOWAPI_STORAGE_URI) if horizontal scaling is added.
+
+Storage: in-memory. This is intentional for the MVP — the Procfile pins ``--workers 1``
+so there is only one process and counters are shared correctly. If you ever scale to
+multiple workers, provision Redis and pass ``storage_uri=settings.slowapi_storage_uri``
+to the Limiter constructor here; otherwise declared limits multiply by worker count.
 """
 
 from __future__ import annotations
