@@ -78,6 +78,14 @@ class Settings(BaseSettings):
                     "when ENVIRONMENT=production. "
                     'Generate one with: python -c "import secrets; print(secrets.token_hex(32))"'
                 )
+            localhost_only = all(
+                "localhost" in o or "127.0.0.1" in o for o in self.cors_allowed_origins
+            )
+            if localhost_only:
+                raise ValueError(
+                    "CORS_ALLOWED_ORIGINS still contains only localhost origins in production. "
+                    "Set it to your Vercel deployment URL, e.g. https://draftwell.vercel.app"
+                )
         return self
 
     # Google OAuth

@@ -15,10 +15,15 @@ from slowapi.util import get_remote_address
 
 
 def get_real_ip(request: Request) -> str:
-    """Return the real client IP, honouring X-Forwarded-For from Railway's proxy."""
+    """Return the real client IP, honouring X-Forwarded-For from Railway's proxy.
+
+    We take the RIGHTMOST value: Railway (and any well-behaved reverse proxy)
+    appends the real client IP at the end, so an attacker who injects a fake IP
+    in the header will have their real IP appended after it by the proxy.
+    """
     forwarded_for = request.headers.get("X-Forwarded-For")
     if forwarded_for:
-        return forwarded_for.split(",")[0].strip()
+        return forwarded_for.split(",")[-1].strip()
     return get_remote_address(request)
 
 

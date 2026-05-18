@@ -141,7 +141,8 @@ async def test_google_start_location_includes_pkce_and_state(
 
 async def test_google_start_503_when_unconfigured() -> None:
     async with _make_client() as ac:
-        r = await ac.get("/api/v1/auth/google", follow_redirects=False)
+        with patch("app.config.settings.google_client_id", None):
+            r = await ac.get("/api/v1/auth/google", follow_redirects=False)
     assert r.status_code == 503
 
 

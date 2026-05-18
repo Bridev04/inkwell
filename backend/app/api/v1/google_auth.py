@@ -8,6 +8,7 @@ import logging
 import re
 import secrets
 
+import httpx
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import RedirectResponse
 from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
@@ -70,7 +71,7 @@ async def google_start(
         secure=settings.environment == "production",
         samesite="lax",
         max_age=_STATE_MAX_AGE,
-        path="/api/v1/auth/google/callback",
+        path="/",
     )
     return response
 
@@ -116,8 +117,19 @@ async def google_callback(
         tokens = await google_oauth.exchange_code(
             settings, code=code, code_verifier=cookie_data["code_verifier"]
         )
+    except httpx.HTTPStatusError as exc:
+        # Log only the status code — the request body contains client_secret
+        logger.warning(
+            "google_token_exchange_failed",
+            extra={"event": "google_token_exchange_failed", "status": exc.response.status_code},
+        )
+        raise HTTPException(
+            status_code=502, detail="Failed to exchange authorization code"
+        ) from exc
     except Exception as exc:
-        logger.exception("google_token_exchange_failed")
+        logger.warning(
+            "google_token_exchange_error", extra={"event": "google_token_exchange_error"}
+        )
         raise HTTPException(
             status_code=502, detail="Failed to exchange authorization code"
         ) from exc
@@ -137,7 +149,8 @@ async def google_callback(
     except HTTPException:
         raise
     except Exception as exc:
-        logger.exception("google_id_token_invalid")
+        # Do not use logger.exception here — the traceback may embed token material
+        logger.warning("google_id_token_invalid", extra={"event": "google_id_token_invalid"})
         raise HTTPException(status_code=502, detail="Invalid ID token from Google") from exc
 
     user = await google_oauth.get_or_link_user(session, claims=claims)
@@ -155,5 +168,5 @@ async def google_callback(
         samesite="lax",
         max_age=settings.jwt_expiry_minutes * 60,
     )
-    response.delete_cookie(key=_STATE_COOKIE, path="/api/v1/auth/google/callback")
+    response.delete_cookie(key=_STATE_COOKIE, path="/")
     return response
