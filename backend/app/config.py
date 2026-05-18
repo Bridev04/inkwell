@@ -6,7 +6,7 @@ Import `settings` everywhere else.
 
 from functools import lru_cache
 
-from pydantic import Field, SecretStr, field_validator, model_validator
+from pydantic import Field, SecretStr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 _KNOWN_WEAK_SECRETS = frozenset(
@@ -54,14 +54,9 @@ class Settings(BaseSettings):
     # Allowlist of origins permitted to make cross-origin requests (browser clients).
     # Set CORS_ALLOWED_ORIGINS as a comma-separated string to add additional origins
     # without a code change — e.g. the deployed Vercel URL in production.
-    cors_allowed_origins: list[str] = Field(default=["http://localhost:3000"])
-
-    @field_validator("cors_allowed_origins", mode="before")
-    @classmethod
-    def _parse_cors_origins(cls, v: object) -> object:
-        if isinstance(v, str):
-            return [origin.strip() for origin in v.split(",")]
-        return v
+    # Comma-separated string; pydantic-settings v2 JSON-parses list fields at the
+    # source level before field validators run, so we keep this as str and split at use sites.
+    cors_allowed_origins: str = Field(default="http://localhost:3000")
 
     # Auth / JWT
     jwt_secret_key: SecretStr = Field(default=SecretStr("changeme-for-dev-only"))
@@ -78,9 +73,8 @@ class Settings(BaseSettings):
                     "when ENVIRONMENT=production. "
                     'Generate one with: python -c "import secrets; print(secrets.token_hex(32))"'
                 )
-            localhost_only = all(
-                "localhost" in o or "127.0.0.1" in o for o in self.cors_allowed_origins
-            )
+            origins = [o.strip() for o in self.cors_allowed_origins.split(",") if o.strip()]
+            localhost_only = all("localhost" in o or "127.0.0.1" in o for o in origins)
             if localhost_only:
                 raise ValueError(
                     "CORS_ALLOWED_ORIGINS still contains only localhost origins in production. "
