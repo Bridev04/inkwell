@@ -38,8 +38,14 @@ export async function GET(request: NextRequest) {
   }
 
   // Railway redirects to the full frontend URL (e.g. https://draftwell-six.vercel.app/desk).
-  // We re-issue the redirect so we can attach the Set-Cookie headers ourselves.
-  const response = NextResponse.redirect(location);
+  // We bounce through /auth-callback so the client can call router.refresh() before
+  // router.push(), clearing the Next.js Router Cache stale entry for the protected route.
+  const nextPath = (() => {
+    try { return new URL(location).pathname; } catch { return '/desk'; }
+  })();
+  const response = NextResponse.redirect(
+    new URL(`/auth-callback?next=${encodeURIComponent(nextPath)}`, request.url)
+  );
 
   // Forward access_token cookie (and oauth_state deletion) from Railway to the browser.
   for (const cookie of getSetCookies(backendRes.headers)) {
