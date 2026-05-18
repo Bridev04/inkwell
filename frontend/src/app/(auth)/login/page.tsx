@@ -22,6 +22,7 @@ export default function LoginPage() {
     setLoading(true);
     try {
       await login(email, password);
+      router.refresh();
       router.push('/desk');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong.');

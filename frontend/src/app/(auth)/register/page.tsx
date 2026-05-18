@@ -27,6 +27,7 @@ export default function RegisterPage() {
     setLoading(true);
     try {
       await register(email, password);
+      router.refresh();
       router.push('/desk');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong.');
