@@ -28,11 +28,11 @@ async def test_health_returns_ok(client: AsyncClient) -> None:
     body = response.json()
     assert body["status"] == "ok"
     assert body["app"] == "Draftwell"
-    assert "environment" in body
 
 
 async def test_health_response_schema(client: AsyncClient) -> None:
-    """Health response has exactly the documented fields — no leaks, no missing."""
+    """Health response exposes only status and app — no environment disclosure."""
     response = await client.get("/api/v1/health")
 
-    assert set(response.json().keys()) == {"status", "app", "environment"}
+    assert set(response.json().keys()) == {"status", "app"}
+    assert "environment" not in response.json()

@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
+import { GoogleButton } from '@/components/ui/google-button';
 import { login } from '@/lib/auth';
 
 export default function LoginPage() {
@@ -41,6 +42,15 @@ export default function LoginPage() {
             className="h-8 w-auto"
           />
         </Link>
+      </div>
+
+      <div className="space-y-3">
+        <GoogleButton next="/desk" />
+        <div className="relative flex items-center">
+          <div className="flex-grow border-t border-stone-200" />
+          <span className="mx-3 font-sans text-xs uppercase tracking-widest text-stone-400">or</span>
+          <div className="flex-grow border-t border-stone-200" />
+        </div>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">

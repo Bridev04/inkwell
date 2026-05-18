@@ -9,6 +9,23 @@ from __future__ import annotations
 import logging
 import sys
 
+# Keys that must never appear in structured log output.
+# If a caller accidentally passes one of these as an extra, the value is
+# replaced with [REDACTED] so secrets cannot leak through log aggregators.
+_SENSITIVE_EXTRA_KEYS = frozenset(
+    {
+        "token",
+        "access_token",
+        "password",
+        "secret",
+        "api_key",
+        "authorization",
+        "cookie",
+        "jwt",
+        "hashed_password",
+    }
+)
+
 _STANDARD_LOGRECORD_ATTRS = {
     "name",
     "msg",
@@ -45,12 +62,16 @@ def configure_logging(level: int = logging.INFO) -> None:
 
 
 class _KeyValueFormatter(logging.Formatter):
-    """Emits log records as space-separated key=value pairs for easy grepping."""
+    """Emits log records as space-separated key=value pairs for easy grepping.
+
+    Any extra field whose name matches _SENSITIVE_EXTRA_KEYS is replaced with
+    [REDACTED] so secrets cannot leak through log aggregators.
+    """
 
     def format(self, record: logging.LogRecord) -> str:
         base = f"level={record.levelname} logger={record.name} msg={record.getMessage()!r}"
         extras = {
-            k: v
+            k: ("[REDACTED]" if k.lower() in _SENSITIVE_EXTRA_KEYS else v)
             for k, v in record.__dict__.items()
             if k not in _STANDARD_LOGRECORD_ATTRS and not k.startswith("_")
         }

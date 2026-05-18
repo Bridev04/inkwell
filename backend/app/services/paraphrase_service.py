@@ -88,6 +88,7 @@ async def stream_paraphrase(
     yield format_sse("token", TokenEvent(text=first_chunk.text or ""))
 
     stream_failed = False
+    done_emitted = False
     try:
         async for chunk in chunks:
             if chunk.type == "text":
@@ -95,6 +96,7 @@ async def stream_paraphrase(
                 output_chunks.append(text)
                 yield format_sse("token", TokenEvent(text=text))
             elif chunk.type == "done":
+                done_emitted = True
                 tokens_used = chunk.tokens_used
                 latency_ms = int((time.perf_counter() - start) * 1000)
                 yield format_sse(
@@ -118,6 +120,19 @@ async def stream_paraphrase(
                         "outcome": "success",
                     },
                 )
+
+        # Guard: emit a done event if the stream ended without one (e.g. network truncation).
+        if not done_emitted and not stream_failed:
+            latency_ms = int((time.perf_counter() - start) * 1000)
+            yield format_sse(
+                "done",
+                DoneEvent(
+                    request_id=request_id,
+                    model_used="unknown",
+                    tokens_used=TokenUsage(input_tokens=0, output_tokens=0, total_tokens=0),
+                    latency_ms=latency_ms,
+                ),
+            )
     except Exception as exc:
         stream_failed = True
         latency_ms = int((time.perf_counter() - start) * 1000)

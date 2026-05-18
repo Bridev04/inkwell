@@ -10,7 +10,7 @@ from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user, get_llm_client
-from app.core.limiter import limiter
+from app.core.limiter import get_user_or_ip, limiter
 from app.db.session import get_session
 from app.models.user import User
 from app.schemas.paraphrase import ParaphraseRequest
@@ -26,7 +26,7 @@ _STREAM_HEADERS = {
 
 
 @router.post("/paraphrase")
-@limiter.limit("20/hour")
+@limiter.limit("20/hour", key_func=get_user_or_ip)
 async def create_paraphrase(
     request: Request,
     req: ParaphraseRequest,

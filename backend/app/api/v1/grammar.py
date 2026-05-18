@@ -10,7 +10,7 @@ from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user, get_llm_client
-from app.core.limiter import limiter
+from app.core.limiter import get_user_or_ip, limiter
 from app.db.session import get_session
 from app.models.user import User
 from app.schemas.grammar import GrammarRequest, GrammarResponse
@@ -24,7 +24,7 @@ router = APIRouter(tags=["grammar"])
 
 
 @router.post("/grammar", response_model=GrammarResponse)
-@limiter.limit("30/hour")
+@limiter.limit("30/hour", key_func=get_user_or_ip)
 async def create_grammar_check(
     request: Request,
     req: GrammarRequest,

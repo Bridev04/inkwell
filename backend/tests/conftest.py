@@ -31,6 +31,18 @@ _BACKEND_DIR = pathlib.Path(__file__).parent.parent
 
 
 # ---------------------------------------------------------------------------
+# Rate-limiter reset — prevents cross-test pollution of the in-memory store
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture(autouse=True)
+def reset_rate_limiter() -> None:
+    from app.core.limiter import limiter
+
+    limiter._storage.reset()
+
+
+# ---------------------------------------------------------------------------
 # Container lifecycle — starts Postgres once per test session
 # ---------------------------------------------------------------------------
 

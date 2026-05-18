@@ -45,6 +45,10 @@ export async function logout(): Promise<void> {
   });
 }
 
+export function googleSignInUrl(next = '/desk'): string {
+  return `/api/v1/auth/google?next=${encodeURIComponent(next)}`;
+}
+
 export async function getMe(): Promise<UserRead | null> {
   const res = await fetch(`${baseUrl()}/api/v1/auth/me`, {
     credentials: 'include',

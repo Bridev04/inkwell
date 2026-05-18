@@ -20,7 +20,9 @@ def _engine() -> AsyncEngine:
         raise RuntimeError("DATABASE_URL is not configured; add it to .env")
     # pool_size and max_overflow are connection pool tuning knobs.
     # Increase pool_size for higher sustained concurrency; max_overflow caps burst headroom.
-    return create_async_engine(url, pool_size=5, max_overflow=10)
+    return create_async_engine(
+        url, pool_size=5, max_overflow=10, pool_pre_ping=True, pool_recycle=300
+    )
 
 
 @lru_cache

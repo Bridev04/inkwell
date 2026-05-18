@@ -29,7 +29,7 @@ def _set_auth_cookie(response: Response, token: str, settings: Settings) -> None
 
 
 @router.post("/auth/register", response_model=UserRead, status_code=201)
-@limiter.limit("10/minute")
+@limiter.limit("3/hour")
 async def register(
     request: Request,
     body: UserCreate,
@@ -45,7 +45,7 @@ async def register(
 
 
 @router.post("/auth/login", response_model=UserRead)
-@limiter.limit("20/minute")
+@limiter.limit("5/minute")
 async def login(
     request: Request,
     body: UserLogin,
@@ -63,9 +63,20 @@ async def login(
 
 
 @router.post("/auth/logout", status_code=204)
-async def logout(response: Response) -> None:
+@limiter.limit("10/minute")
+async def logout(
+    request: Request,
+    response: Response,
+    settings: Settings = Depends(get_settings),  # noqa: B008
+) -> None:
     """Clear the session cookie."""
-    response.delete_cookie(key="access_token", httponly=True, samesite="lax")
+    response.delete_cookie(
+        key="access_token",
+        httponly=True,
+        secure=settings.environment == "production",
+        samesite="lax",
+        path="/",
+    )
 
 
 @router.get("/auth/me", response_model=UserRead)

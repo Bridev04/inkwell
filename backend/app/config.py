@@ -6,8 +6,17 @@ Import `settings` everywhere else.
 
 from functools import lru_cache
 
-from pydantic import Field, SecretStr, field_validator
+from pydantic import Field, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+_KNOWN_WEAK_SECRETS = frozenset(
+    {
+        "changeme-for-dev-only",
+        "changeme-dev-only-not-for-production",
+        "changeme",
+        "secret",
+    }
+)
 
 
 class Settings(BaseSettings):
@@ -22,6 +31,7 @@ class Settings(BaseSettings):
     app_name: str = "Draftwell"
     environment: str = Field(default="development")
     debug: bool = Field(default=False)
+    log_level: str = Field(default="INFO")
 
     # LLM
     anthropic_api_key: SecretStr
@@ -57,6 +67,27 @@ class Settings(BaseSettings):
     jwt_secret_key: SecretStr = Field(default=SecretStr("changeme-for-dev-only"))
     jwt_algorithm: str = Field(default="HS256")
     jwt_expiry_minutes: int = Field(default=1440)  # 24 hours
+
+    @model_validator(mode="after")
+    def _reject_weak_secrets_in_production(self) -> "Settings":
+        if self.environment == "production":
+            secret = self.jwt_secret_key.get_secret_value()
+            if len(secret) < 32 or secret in _KNOWN_WEAK_SECRETS:
+                raise ValueError(
+                    "JWT_SECRET_KEY must be ≥ 32 characters and not a known placeholder "
+                    "when ENVIRONMENT=production. "
+                    'Generate one with: python -c "import secrets; print(secrets.token_hex(32))"'
+                )
+        return self
+
+    # Google OAuth
+    google_client_id: str | None = Field(default=None)
+    google_client_secret: SecretStr | None = Field(default=None)
+    # Redirect URI must match exactly what is registered in Google Cloud Console.
+    # Local dev: http://localhost:3000/api/v1/auth/google/callback (via Next.js proxy)
+    google_redirect_uri: str = Field(default="http://localhost:3000/api/v1/auth/google/callback")
+    # Where to send the browser after a successful OAuth callback.
+    frontend_base_url: str = Field(default="http://localhost:3000")
 
     # Database
     # Two URLs for the same Postgres instance: the app uses the async asyncpg driver;

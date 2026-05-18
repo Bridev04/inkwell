@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -13,6 +14,8 @@ from app.db.session import get_session
 from app.models.user import User
 from app.schemas.documents import DocumentRead
 from app.services.persistence import get_document, get_documents_by_user
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["documents"])
 
@@ -48,5 +51,14 @@ async def get_document_by_id(
     """Retrieve a document and its embedded records by id. Returns 404 if not found or not owned."""
     doc = await get_document(session, document_id)
     if doc is None or doc.user_id != user.id:
+        if doc is not None:
+            logger.warning(
+                "document_access_denied",
+                extra={
+                    "event": "document_access_denied",
+                    "user_id": str(user.id),
+                    "document_id": str(document_id),
+                },
+            )
         raise HTTPException(status_code=404, detail="Document not found")
     return DocumentRead.model_validate(doc)

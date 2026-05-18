@@ -44,7 +44,7 @@ async def test_register_duplicate_email_returns_409(
         )
 
     assert response.status_code == 409
-    assert "already registered" in response.json()["detail"].lower()
+    assert "registration unsuccessful" in response.json()["detail"].lower()
 
 
 async def test_register_invalid_email_returns_422(

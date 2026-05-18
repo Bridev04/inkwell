@@ -56,7 +56,7 @@ def _build_prompt(req: FeedbackRequest) -> str:
         f"Please review the following draft. Focus on: {focus_list}.",
     ]
     if req.audience:
-        lines.append(f"Intended audience: {req.audience}.")
+        lines.append(f"Intended audience: <audience>{req.audience}</audience>")
     lines.append("")
     lines.append("--- DRAFT START ---")
     lines.append(req.text)
