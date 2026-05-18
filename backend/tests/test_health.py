@@ -31,8 +31,8 @@ async def test_health_returns_ok(client: AsyncClient) -> None:
 
 
 async def test_health_response_schema(client: AsyncClient) -> None:
-    """Health response exposes only status and app — no environment disclosure."""
+    """Health response exposes status, app, and db_ok — no environment disclosure."""
     response = await client.get("/api/v1/health")
 
-    assert set(response.json().keys()) == {"status", "app"}
+    assert set(response.json().keys()) == {"status", "app", "db_ok"}
     assert "environment" not in response.json()

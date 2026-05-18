@@ -38,7 +38,9 @@ async def create_grammar_check(
     except anthropic.APITimeoutError as exc:
         raise HTTPException(status_code=504, detail="LLM request timed out") from exc
     except anthropic.RateLimitError as exc:
-        raise HTTPException(status_code=429, detail="LLM rate limit exceeded") from exc
+        raise HTTPException(
+            status_code=503, detail="Service temporarily unavailable, please retry"
+        ) from exc
     except ValidationError as exc:
         raise HTTPException(status_code=502, detail="AI response could not be validated") from exc
     except anthropic.APIError as exc:

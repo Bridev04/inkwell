@@ -18,17 +18,37 @@ from app.core.logging import configure_logging
 
 
 class _BodySizeLimitMiddleware:
-    """Reject requests whose Content-Length header exceeds MAX_BYTES.
+    """Reject requests whose body exceeds MAX_BYTES.
 
-    Pure-ASGI, so it does not buffer bodies or interfere with SSE streaming.
-    Chunked-encoded requests without Content-Length are not covered here —
-    Railway's edge proxy provides an additional cap for those.
+    For requests with a Content-Length header the check is instant.  For
+    chunked-encoded requests (no Content-Length) the body is buffered until the
+    limit is exceeded or the transfer ends; the buffered bytes are then replayed
+    to the application via a synthetic receive callable so FastAPI sees a normal
+    request.  Buffering only applies to incoming request bodies; outgoing SSE
+    streaming responses are unaffected.
     """
 
     MAX_BYTES = 256 * 1024  # 256 KB — well above any valid JSON API payload
+    _413_BODY = b'{"detail":"Request body too large"}'
 
     def __init__(self, app: ASGIApp) -> None:
         self.app = app
+
+    async def _reject(self, send: Send) -> None:
+        await send(
+            {
+                "type": "http.response.start",
+                "status": 413,
+                "headers": [(b"content-type", b"application/json")],
+            }
+        )
+        await send(
+            {
+                "type": "http.response.body",
+                "body": self._413_BODY,
+                "more_body": False,
+            }
+        )
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         if scope["type"] != "http":
@@ -37,28 +57,42 @@ class _BodySizeLimitMiddleware:
 
         headers = {k.lower(): v for k, v in scope.get("headers", [])}
         cl = headers.get(b"content-length")
+
         if cl is not None:
             try:
                 if int(cl) > self.MAX_BYTES:
-                    await send(
-                        {
-                            "type": "http.response.start",
-                            "status": 413,
-                            "headers": [(b"content-type", b"application/json")],
-                        }
-                    )
-                    await send(
-                        {
-                            "type": "http.response.body",
-                            "body": b'{"detail":"Request body too large"}',
-                            "more_body": False,
-                        }
-                    )
+                    await self._reject(send)
                     return
             except ValueError:
                 pass
+            await self.app(scope, receive, send)
+            return
 
-        await self.app(scope, receive, send)
+        # Chunked transfer: buffer incrementally and reject if limit exceeded.
+        chunks: list[bytes] = []
+        total = 0
+        while True:
+            message = await receive()
+            chunk = message.get("body", b"")
+            total += len(chunk)
+            if total > self.MAX_BYTES:
+                await self._reject(send)
+                return
+            chunks.append(chunk)
+            if not message.get("more_body", False):
+                break
+
+        full_body = b"".join(chunks)
+        replayed = False
+
+        async def _replay() -> dict[str, Any]:
+            nonlocal replayed
+            if not replayed:
+                replayed = True
+                return {"type": "http.request", "body": full_body, "more_body": False}
+            return {"type": "http.disconnect"}
+
+        await self.app(scope, _replay, send)
 
 
 class _SecurityHeadersMiddleware:

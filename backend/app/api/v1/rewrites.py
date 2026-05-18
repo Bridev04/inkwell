@@ -50,7 +50,9 @@ async def create_rewrite(
     except anthropic.APITimeoutError as exc:
         raise HTTPException(status_code=504, detail="LLM request timed out") from exc
     except anthropic.RateLimitError as exc:
-        raise HTTPException(status_code=429, detail="LLM rate limit exceeded") from exc
+        raise HTTPException(
+            status_code=503, detail="Service temporarily unavailable, please retry"
+        ) from exc
     except anthropic.APIError as exc:
         raise HTTPException(status_code=502, detail="LLM service error") from exc
 

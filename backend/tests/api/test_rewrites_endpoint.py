@@ -118,7 +118,7 @@ async def test_post_rewrites_returns_504_on_pre_flight_timeout() -> None:
     assert response.headers.get("content-type", "").startswith("application/json")
 
 
-async def test_post_rewrites_returns_429_on_pre_flight_rate_limit() -> None:
+async def test_post_rewrites_returns_503_on_pre_flight_rate_limit() -> None:
     rate_err = anthropic.RateLimitError(
         message="rate limited",
         response=httpx.Response(429, request=httpx.Request("POST", "https://api.anthropic.com")),
@@ -127,7 +127,7 @@ async def test_post_rewrites_returns_429_on_pre_flight_rate_limit() -> None:
     fake = FakeLLMClient(stream_chunks=[rate_err])
     async with _client_with(fake) as ac:
         response = await ac.post("/api/v1/rewrites", json={"text": "Some draft.", "style": "vivid"})
-    assert response.status_code == 429
+    assert response.status_code == 503
 
 
 async def test_post_rewrites_emits_error_event_on_mid_stream_failure() -> None:

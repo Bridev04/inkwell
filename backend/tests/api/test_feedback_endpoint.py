@@ -94,4 +94,4 @@ async def test_post_feedback_handles_rate_limit() -> None:
     fake = FakeLLMClient(structured_responses=[rate_err])
     async with _client_with(fake) as ac:
         response = await ac.post("/api/v1/feedback", json={"text": "Some draft."})
-    assert response.status_code == 429
+    assert response.status_code == 503

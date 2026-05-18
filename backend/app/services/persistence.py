@@ -103,12 +103,18 @@ async def save_paraphrase(
 async def get_documents_by_user(
     session: AsyncSession,
     user_id: uuid.UUID,
+    *,
+    limit: int = 50,
 ) -> list[Document]:
-    """Fetch all documents for a user, newest first, with relations eager-loaded."""
+    """Fetch the most recent ``limit`` documents for a user, newest first.
+
+    ``limit`` is server-enforced; callers should not pass values above 100.
+    """
     stmt = (
         select(Document)
         .where(Document.user_id == user_id)
         .order_by(Document.created_at.desc())
+        .limit(limit)
         .options(
             selectinload(Document.feedbacks),
             selectinload(Document.rewrites),

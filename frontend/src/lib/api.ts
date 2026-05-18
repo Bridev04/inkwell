@@ -199,8 +199,14 @@ function baseUrl(): string {
 
 async function throwIfNotOk(res: Response): Promise<void> {
   if (!res.ok) {
-    const body = await res.text().catch(() => '');
-    throw new Error(`HTTP ${res.status} ${res.statusText}: ${body}`);
+    let detail = `HTTP ${res.status} ${res.statusText}`;
+    try {
+      const json = await res.json();
+      if (typeof json?.detail === 'string') detail = json.detail;
+    } catch {
+      // non-JSON body — use the status line only, never surface raw HTML/stack traces
+    }
+    throw new Error(detail);
   }
 }
 

@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user
@@ -26,9 +26,14 @@ async def list_documents(
     request: Request,
     user: User = Depends(get_current_user),  # noqa: B008
     session: AsyncSession = Depends(get_session),  # noqa: B008
+    limit: int = Query(default=50, ge=1, le=100),
 ) -> list[DocumentRead]:
-    """Return all documents owned by the current user, newest first."""
-    docs = await get_documents_by_user(session, user.id)
+    """Return the most recent documents owned by the current user, newest first.
+
+    Use the ``limit`` query parameter (1-100, default 50) to control how many
+    results are returned.  Cursor-based pagination may be added in a later release.
+    """
+    docs = await get_documents_by_user(session, user.id, limit=limit)
     return [DocumentRead.model_validate(doc) for doc in docs]
 
 

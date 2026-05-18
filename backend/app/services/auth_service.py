@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import uuid
+from functools import lru_cache
 
 import bcrypt
 from fastapi import HTTPException
@@ -15,10 +16,17 @@ from app.models.user import User
 
 logger = logging.getLogger(__name__)
 
-# Pre-computed dummy hash used in authenticate_user when the email is not found.
-# Always running bcrypt (even for unknown emails) prevents a timing oracle that
-# would let an attacker distinguish "email not registered" from "wrong password".
-_DUMMY_HASH: str = bcrypt.hashpw(b"__dummy__", bcrypt.gensalt()).decode()
+
+@lru_cache(maxsize=1)
+def _dummy_hash() -> str:
+    """Return a bcrypt hash of a fixed dummy string for constant-time auth.
+
+    Computed once on first call so import time is not penalised on every cold
+    start (migrations, tests, worker restarts).  The result is cached for the
+    life of the process so the timing-oracle defence is preserved on subsequent
+    calls.
+    """
+    return bcrypt.hashpw(b"__dummy__", bcrypt.gensalt()).decode()
 
 
 def hash_password(plain: str) -> str:
@@ -72,7 +80,7 @@ async def authenticate_user(
     target_hash = (
         user.hashed_password
         if user is not None and user.hashed_password is not None
-        else _DUMMY_HASH
+        else _dummy_hash()
     )
     if not verify_password(password, target_hash) or user is None or user.hashed_password is None:
         logger.warning("login_failed", extra={"event": "login_failed"})

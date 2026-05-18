@@ -43,7 +43,7 @@ class GrammarScores(BaseModel):
 
 class GrammarResponse(BaseModel):
     document_id: UUID | None = None
-    corrected_text: str = ""
+    corrected_text: str = Field(default="", max_length=40_000)
     issues: list[GrammarIssue]
     scores: GrammarScores
     word_count: int = Field(ge=0)

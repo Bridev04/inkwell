@@ -91,7 +91,7 @@ async def test_post_grammar_llm_timeout_504() -> None:
     assert response.status_code == 504
 
 
-async def test_post_grammar_rate_limit_429() -> None:
+async def test_post_grammar_rate_limit_503() -> None:
     rate_err = anthropic.RateLimitError(
         message="rate limited",
         response=httpx.Response(429, request=httpx.Request("POST", "https://api.anthropic.com")),
@@ -100,7 +100,7 @@ async def test_post_grammar_rate_limit_429() -> None:
     fake = FakeLLMClient(structured_responses=[rate_err])
     async with _client_with(fake) as ac:
         response = await ac.post("/api/v1/grammar", json={"text": "Some draft."})
-    assert response.status_code == 429
+    assert response.status_code == 503
 
 
 async def test_post_grammar_no_issues_scores_100() -> None:
